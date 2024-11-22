@@ -29,6 +29,7 @@
 `define TB_VCD(TOP, NAME)     \
     initial \
     begin \
-       $dumpfile(``NAME);  \
-       $dumpvars(0,``TOP); \
+        $fsdbDumpfile(``NAME);   \
+        $fsdbDumpvars;  \
+        $fsdbDumpMDA(); \
     end
