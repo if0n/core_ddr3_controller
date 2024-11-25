@@ -478,9 +478,9 @@
     parameter TWPRE            =    0.90; // tWPRE      tCK   DQS Write Preamble
     parameter TWPST            =    0.30; // tWPST      tCK   DQS Write Postamble
     // Command and Address
-    integer TZQCS              =  $max( 64, $ceil( 80000/TCK_MIN)); // tZQCS      tCK   ZQ Cal (Short) time
-    integer TZQINIT            =  $max(512, $ceil(640000/TCK_MIN)); // tZQinit    tCK   ZQ Cal (Long) time
-    integer TZQOPER            =  $max(256, $ceil(320000/TCK_MIN)); // tZQoper    tCK   ZQ Cal (Long) time
+    integer   TZQCS;                      // tZQCS      tCK   ZQ Cal (Short) time
+    integer   TZQINIT;                    // tZQinit    tCK   ZQ Cal (Long) time
+    integer   TZQOPER;                    // tZQoper    tCK   ZQ Cal (Long) time
     parameter TCCD             =       4; // tCCD       tCK   Cas to Cas command delay
     parameter TCCD_DG          =       2; // tCCD_DG    tCK   Cas to Cas command delay to different group
     parameter TRAS_MAX         =    60e9; // tRAS       ps    Maximum Active to Precharge command time
