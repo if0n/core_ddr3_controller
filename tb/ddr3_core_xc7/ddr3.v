@@ -1,9 +1,8 @@
 `define MAX_MEM
-
 /****************************************************************************************
 *
 *    File Name:  ddr3.v
-*      Version:  1.70
+*      Version:  1.74
 *        Model:  BUS Functional
 *
 * Dependencies:  ddr3_parameters.vh
@@ -21,25 +20,25 @@
 *         Note:  - Set simulator resolution to "ps" accuracy
 *                - Set DEBUG = 0 to disable $display messages
 *
-*   Disclaimer   This software code and all associated documentation, comments or other 
-*  of Warranty:  information (collectively "Software") is provided "AS IS" without 
-*                warranty of any kind. MICRON TECHNOLOGY, INC. ("MTI") EXPRESSLY 
-*                DISCLAIMS ALL WARRANTIES EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
-*                TO, NONINFRINGEMENT OF THIRD PARTY RIGHTS, AND ANY IMPLIED WARRANTIES 
-*                OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE. MTI DOES NOT 
-*                WARRANT THAT THE SOFTWARE WILL MEET YOUR REQUIREMENTS, OR THAT THE 
-*                OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE. 
-*                FURTHERMORE, MTI DOES NOT MAKE ANY REPRESENTATIONS REGARDING THE USE OR 
-*                THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS, 
-*                ACCURACY, RELIABILITY, OR OTHERWISE. THE ENTIRE RISK ARISING OUT OF USE 
-*                OR PERFORMANCE OF THE SOFTWARE REMAINS WITH YOU. IN NO EVENT SHALL MTI, 
-*                ITS AFFILIATED COMPANIES OR THEIR SUPPLIERS BE LIABLE FOR ANY DIRECT, 
-*                INDIRECT, CONSEQUENTIAL, INCIDENTAL, OR SPECIAL DAMAGES (INCLUDING, 
-*                WITHOUT LIMITATION, DAMAGES FOR LOSS OF PROFITS, BUSINESS INTERRUPTION, 
-*                OR LOSS OF INFORMATION) ARISING OUT OF YOUR USE OF OR INABILITY TO USE 
-*                THE SOFTWARE, EVEN IF MTI HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH 
-*                DAMAGES. Because some jurisdictions prohibit the exclusion or 
-*                limitation of liability for consequential or incidental damages, the 
+*   Disclaimer   This software code and all associated documentation, comments or other
+*  of Warranty:  information (collectively "Software") is provided "AS IS" without
+*                warranty of any kind. MICRON TECHNOLOGY, INC. ("MTI") EXPRESSLY
+*                DISCLAIMS ALL WARRANTIES EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+*                TO, NONINFRINGEMENT OF THIRD PARTY RIGHTS, AND ANY IMPLIED WARRANTIES
+*                OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE. MTI DOES NOT
+*                WARRANT THAT THE SOFTWARE WILL MEET YOUR REQUIREMENTS, OR THAT THE
+*                OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE.
+*                FURTHERMORE, MTI DOES NOT MAKE ANY REPRESENTATIONS REGARDING THE USE OR
+*                THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS,
+*                ACCURACY, RELIABILITY, OR OTHERWISE. THE ENTIRE RISK ARISING OUT OF USE
+*                OR PERFORMANCE OF THE SOFTWARE REMAINS WITH YOU. IN NO EVENT SHALL MTI,
+*                ITS AFFILIATED COMPANIES OR THEIR SUPPLIERS BE LIABLE FOR ANY DIRECT,
+*                INDIRECT, CONSEQUENTIAL, INCIDENTAL, OR SPECIAL DAMAGES (INCLUDING,
+*                WITHOUT LIMITATION, DAMAGES FOR LOSS OF PROFITS, BUSINESS INTERRUPTION,
+*                OR LOSS OF INFORMATION) ARISING OUT OF YOUR USE OF OR INABILITY TO USE
+*                THE SOFTWARE, EVEN IF MTI HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+*                DAMAGES. Because some jurisdictions prohibit the exclusion or
+*                limitation of liability for consequential or incidental damages, the
 *                above limitation may not apply to you.
 *
 *                Copyright 2003 Micron Technology, Inc. All rights reserved.
@@ -78,13 +77,20 @@
 * 1.62  SPH      10/26/10    Added 4Gb DDR3 SDRAM support
 * 1.63  MYY      11/09/10    Added Dll Disable mode
 * 1.64  MYY      07/28/11    Check dqs_in for dqs timing check
-* 1.65  MYY      09/19/11    Widen internal bus width         
+* 1.65  MYY      09/19/11    Widen internal bus width
 * 1.66  MYY      01/20/12    Support ODT tied high feature
 * 1.67  MYY      02/03/12    Added TJIT_PER margin for timing checks
 * 1.68  SPH      04/02/12    Added memory preload
 * 1.69  SPH      03/19/13    Update tZQCS, tZQinit, tZQoper timing parameters
-* 1.70  SPH      04/08/14    Update tRFC to PRECARGE check
+* 1.70  SPH      04/08/14    Update tRFC to PRECHARGE check
+* 1.71  SPH      04/21/14    Added 8Gb mono die parameters
+*                            Remove strict CL check
+* 1.72  DLH      06/18/15    calculate TZQCS from current tCK
+* 1.73  SPH      08/20/15    calculate TZQINIT/TZQOPER from current tCK
+* 1.74  SPH      09/08/15    Fix CWL 9 check to use 1071ps instead of 15e3/14 (round up error)
+*                            Fix tIS don't care for Bank and Address when DES / NOP
 *****************************************************************************************/
+
 // DO NOT CHANGE THE TIMESCALE
 // MAKE SURE YOUR SIMULATOR USES "PS" RESOLUTION
 `timescale 1ps / 1ps
@@ -108,28 +114,27 @@ module ddr3 (
     odt
 );
 
-`include "2048Mb_ddr3_parameters.vh"
+`ifdef den1024Mb
+    `include "1024Mb_ddr3_parameters.vh"
+`elsif den2048Mb
+    `include "2048Mb_ddr3_parameters.vh"
+`elsif den4096Mb
+    `include "4096Mb_ddr3_parameters.vh"
+`elsif den8192Mb
+    `include "8192Mb_ddr3_parameters.vh"
+`else
+    // NOTE: Intentionally cause a compile fail here to force the users
+    //       to select the correct component density before continuing
+    ERROR: You must specify component density with +define+den____Mb.
+`endif
 
-    initial begin
-        $display ("TCK_MIN = %d", TCK_MIN);
-`ifdef sg15E
-        $display ("sg15E = `sg15E");
-`endif  
-    
-`ifdef sg093                              // sg093  is equivalent to the JEDEC DDR3-2133 (14-14-14) speed bin
-        $display ("sg093");
-`elsif sg15E
-        $display ("sg15E");
-`endif          
-    end
-    
     parameter check_strict_mrbits = 1;
-    parameter check_strict_timing = 0;
+    parameter check_strict_timing = 1;
     parameter feature_pasr = 1;
     parameter feature_truebl4 = 0;
     parameter feature_odt_hi = 0;
     parameter PERTCKAVG=TDLLK;
-   
+
     // text macros
     `define DQ_PER_DQS DQ_BITS/DQS_BITS
     `define BANKS      (1<<BA_BITS)
@@ -137,6 +142,10 @@ module ddr3 (
     `define MAX_SIZE   (1<<(BA_BITS+ROW_BITS+COL_BITS-BL_BITS))
     `define MEM_SIZE   (1<<MEM_BITS)
     `define MAX_PIPE   4*CL_MAX
+
+
+
+
 
     // Declare Ports
     input   rst_n;
@@ -171,10 +180,9 @@ module ddr3 (
     real    tjit_per_rtime;
     integer tjit_cc_time;
     real    terr_nper_rtime;
-
     //DDR3 clock jitter variables
     real    tjit_ch_rtime;
-    real    duty_cycle;
+    integer duty_cycle;
 
     // clock skew
     integer out_delay;
@@ -271,6 +279,8 @@ module ddr3 (
     reg     rd_bc;
     integer banki;
 
+
+
     // cmd timers/counters
     integer ref_cntr;
     integer odt_cntr;
@@ -334,7 +344,7 @@ module ddr3 (
     reg [2:0]  cmd_n_in_pipeline  [63:0];
     reg [BA_BITS-1:0] ba_in_pipeline [63:0];
     reg [ADDR_BITS-1:0] addr_in_pipeline [63:0];
-          
+
     // data state
     reg     [BL_MAX*DQ_BITS-1:0] memory_data;
     reg     [BL_MAX*DQ_BITS-1:0] bit_mask;
@@ -410,11 +420,8 @@ module ddr3 (
         reg [COL_BITS - 1 : 0] col;
         reg [BA_BITS + ROW_BITS + COL_BITS - 1 : 0] addr;
         reg [BL_MAX * DQ_BITS - 1 : 0] data;
-        //TODO: replace string and $fscanf
-//        string char;
-        reg [127:0] char;
+        string _char;
         integer in, fio_status;
-        integer i;
 
         if (!$value$plusargs("model_data+%s", tmp_model_dir))
         begin
@@ -425,15 +432,14 @@ module ddr3 (
             );
         end
 
-//        for (integer i = 0; i < `BANKS; i = i + 1)
-        for ( i = 0; i < `BANKS; i = i + 1)
+        for (integer i = 0; i < `BANKS; i = i + 1)
             memfd[i] = open_bank_file(i);
 
         // Preload section
     `ifdef mem_init
         in = $fopen("mem_init.txt","r");
         while (! $feof(in)) begin
-            fio_status = $fscanf(in, "%h %s %h", addr, char, data); // TODO:replace
+            fio_status = $fscanf(in, "%h %s %h", addr, _char, data);
             if (fio_status != -1) begin // Check for blank line or EOF
                 bank = addr [BA_BITS + ROW_BITS + COL_BITS - 1 : ROW_BITS + COL_BITS];
                 row = addr [ROW_BITS + COL_BITS - 1 : COL_BITS];
@@ -491,7 +497,7 @@ module ddr3 (
     always @(ck     ) ck_in      <= #BUS_DELAY ck;
     always @(ck_n   ) ck_n_in    <= #BUS_DELAY ck_n;
 
-    always @(cke    ) 
+    always @(cke    )
       cke_in     <= #BUS_DELAY cke;
 
     always @(cs_n   ) cs_n_in    <= #BUS_DELAY cs_n;
@@ -507,16 +513,16 @@ module ddr3 (
     // create internal clock
     always @(posedge ck_in) diff_ck <= ck_in;
     always @(posedge ck_n_in) diff_ck <= ~ck_n_in;
-    
-   
+
+
     wire    [31:0] dqs_even = dqs_in[31:0];
     wire    [31:0] dqs_odd  = dqs_in[63:32];
 
-    // wire    [3:0]  cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;  //deselect = nop 
+    // wire    [3:0]  cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;  //deselect = nop
     reg  [3:0]  cmd_n_in;
     always @(cs_n_in or ras_n_in or cas_n_in or we_n_in)
       cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;
-   
+
     // transmit
     reg                    dqs_out_en;
     reg     [DQS_BITS-1:0] dqs_out_en_dly;
@@ -530,34 +536,22 @@ module ddr3 (
     integer                rdqs_cntr;
     integer                rdqen_cntr;
     integer                rdq_cntr;
-    
-`ifdef CVC
-    wire [DQS_BITS-1:0] dqs_in0 = dqs_out_dly;
-    wire [DQS_BITS-1:0] dqs_in1 = ~dqs_out_dly;
-    wire [DQ_BITS-1:0] dq_in2 = dq_out_dly;
-    wire [DQS_BITS-1:0] dqs_en0 = dqs_out_en_dly & {DQS_BITS{out_en}};
-    wire [DQS_BITS-1:0] dqs_en1 = dqs_out_en_dly & {DQS_BITS{out_en}};
-    wire [DQ_BITS-1:0] dq_en2 = dq_out_en_dly & {DQS_BITS{out_en}};
-    bufif1 buf_dqs    [DQS_BITS-1:0] (dqs,   dqs_in0  ,dqs_en0  );
-    bufif1 buf_dqs_n  [DQS_BITS-1:0] (dqs_n, dqs_in1  ,dqs_en1 );
-    bufif1 buf_dq     [DQ_BITS-1:0]  (dq,  dq_in2    , dq_en2 );
-`else
-    bufif1 buf_dqs    [DQS_BITS-1:0] (dqs,     dqs_out_dly,  dqs_out_en_dly & {DQS_BITS{out_en}     }); 
-    bufif1 buf_dqs_n  [DQS_BITS-1:0] (dqs_n,   ~dqs_out_dly, dqs_out_en_dly & {DQS_BITS{out_en}     }); 
+
+    bufif1 buf_dqs    [DQS_BITS-1:0] (dqs,     dqs_out_dly,  dqs_out_en_dly & {DQS_BITS{out_en}     });
+    bufif1 buf_dqs_n  [DQS_BITS-1:0] (dqs_n,   ~dqs_out_dly, dqs_out_en_dly & {DQS_BITS{out_en}     });
     bufif1 buf_dq     [DQ_BITS-1:0]  (dq,      dq_out_dly,   dq_out_en_dly  & {DQ_BITS {out_en}     });
-`endif
     assign tdqs_n = {DQS_BITS{1'bz}};
 
+    assign TZQCS   = max( 64, ceil( 80000/tck_avg));
+    assign TZQINIT =  max(512, ceil(640000/tck_avg));
+    assign TZQOPER =  max(256, ceil(320000/tck_avg));
     initial begin
-        if (BL_MAX < 2) 
+        if (BL_MAX < 2)
             $display("%m ERROR: BL_MAX parameter must be >= 2.  \nBL_MAX = %d", BL_MAX);
-        if ((1<<BO_BITS) > BL_MAX) 
+        if ((1<<BO_BITS) > BL_MAX)
             $display("%m ERROR: 2^BO_BITS cannot be greater than BL_MAX parameter.");
-`ifdef CVC
-        $timeformat (-12, 1, " ps", 10);
-`else
+
         $timeformat (-12, 1, " ps", 1);
-`endif
         seed = RANDOM_SEED;
 
         ck_cntr = 0;
@@ -622,11 +616,11 @@ module ddr3 (
             floor = number;
     endfunction
 
-    function integer max( input integer a, input integer b );
+    function int max( input int a, b );
         max = (a < b) ? b : a;
     endfunction
 
-    function integer min( input integer a, input integer b );
+    function int min( input int a, b );
         min = (a > b) ? b : a;
     endfunction
 
@@ -635,7 +629,7 @@ module ddr3 (
     function integer open_bank_file( input integer bank );
         integer fd;
         reg [2048:1] filename;
-        begin 
+        begin
             $sformat( filename, "%0s/%m.%0d", tmp_model_dir, bank );
 
             fd = $fopen(filename, "wb+");
@@ -653,33 +647,26 @@ module ddr3 (
         end
     endfunction
 
-    function [RFF_BITS:1] read_from_file( 
-        input integer fd, 
-        input integer index 
+    function [RFF_BITS:1] read_from_file(
+        input integer fd,
+        input integer index
     );
         integer code;
-        integer offset; 
+        integer offset;
         reg [1024:1] msg;
         reg [RFF_BITS:1] read_value;
-`ifdef CVC
-        reg [RFF_BITS*2+8:1] read_str;
-`endif
-    
+
         begin
             offset = index * RFF_CHUNK;
             code = $fseek( fd, offset, 0 );
             // $fseek returns 0 on success, -1 on failure
             if (code != 0)
             begin
-                $display("%m: at time %t ERROR: fseek to %d failed index=%d ", $time, offset, index);
-//                $finish;
+                $display("%m: at time %t ERROR: fseek to %d failed", $time, offset);
+                $finish;
             end
-`ifdef CVC
-            code = $fgets(read_str, fd);
-            code = $sscanf(read_str, "%h", read_value);
-`else
+
             code = $fscanf(fd, "%z", read_value);
-`endif
             // $fscanf returns number of items read
             if (code != 1)
             begin
@@ -692,46 +679,30 @@ module ddr3 (
                 else
                     read_value = 'hx;
             end
-    
+
             /* when reading from unwritten portions of the file, 0 will be returned.
             * Use 0 in bit 1 as indicator that invalid data has been read.
             * A true 0 is encoded as Z.
             */
-`ifdef CVC
-            if (read_value[4:1] === 4'bzzzz)
-                // true 0 encoded as Z, data is valid
-                read_value[4:1] = 4'b0000;
-            else if (read_value[4:1] === 4'b0000)
-                // read from file section that has not been written
-                read_value = 'hx;
-`else
             if (read_value[1] === 1'bz)
                 // true 0 encoded as Z, data is valid
                 read_value[1] = 1'b0;
             else if (read_value[1] === 1'b0)
                 // read from file section that has not been written
                 read_value = 'hx;
-`endif
 
             read_from_file = read_value;
         end
     endfunction
-/*    
-    task write_to_file( 
-        input integer fd, 
-        input integer index, 
-        input [RFF_BITS:1] data 
-    );
-*/    
-    task write_to_file; 
-        input integer fd; 
-        input integer index; 
-        input [RFF_BITS:1] data; 
-    
 
+    task write_to_file(
+        input integer fd,
+        input integer index,
+        input [RFF_BITS:1] data
+    );
         integer code;
         integer offset;
-    
+
         begin
             offset = index * RFF_CHUNK;
             code = $fseek( fd, offset, 0 );
@@ -740,24 +711,14 @@ module ddr3 (
                 $display("%m: at time %t ERROR: fseek to %d failed", $time, offset);
                 $finish;
             end
-        
-`ifdef CVC
-            // encode a valid data 
-            if (data[4:1] === 4'bzzzz)
-                data[4:1] = 4'bxxxx;
-            else if (data[4:1] === 4'b0000)
-                data[4:1] = 4'bzzzz;
 
-            $fwrite( fd, "%h", data );
-`else
-            // encode a valid data 
+            // encode a valid data
             if (data[1] === 1'bz)
                 data[1] = 1'bx;
             else if (data[1] === 1'b0)
                 data[1] = 1'bz;
 
             $fwrite( fd, "%z", data );
-`endif
         end
     endtask
 `else
@@ -852,9 +813,9 @@ module ddr3 (
 `ifdef MAX_MEM
         for (bank = 0; bank < `BANKS; bank = bank + 1)
             if (banks[bank] === 1'b1) begin
-            $fclose(memfd[bank]);
+	        $fclose(memfd[bank]);
                 memfd[bank] = open_bank_file(bank);
-        end
+	    end
 `else
         memory_index = 0;
         i = 0;
@@ -895,7 +856,7 @@ module ddr3 (
             cmd_task(prev_cke, 0,       NOP, 'bx, 'bx);
         end
     endtask
-    
+
     task reset_task;
         integer i;
         begin
@@ -923,11 +884,11 @@ module ddr3 (
             active_bank         = 0;
             auto_precharge_bank = 0;
             read_precharge_bank  = 0;
-            write_precharge_bank = 0;
+	        write_precharge_bank = 0;
             // require initialization sequence
 
             init_done            = 0;
-            mpr_en              = 0;
+		    mpr_en              = 0;
             init_step           = 0;
             init_mode_reg       = 0;
             init_dll_reset      = 0;
@@ -946,20 +907,14 @@ module ddr3 (
             rd_pipeline         = 0;
             odt_pipeline        = 0;
             dyn_odt_pipeline    = 0;
-        cmd_tran_pipeline   = 0;
-        cmd_tran_index      = 0;
+	    cmd_tran_pipeline   = 0;
+	    cmd_tran_index      = 0;
         end
     endtask
 
     parameter SAME_BANK  = 2'd0; // same bank, same group
     parameter DIFF_BANK  = 2'd1; // different bank, same group
     parameter DIFF_GROUP = 2'd2; // different bank, different group
-    
-// Andrey: Additional parameters to reduce long required delays during simulation
-    parameter SIMUL_500US = 500;
-    parameter SIMUL_200US = 200;
-        
-    
 
     task chk_err;
         input [1:0] relationship;
@@ -986,16 +941,16 @@ module ddr3 (
             {1'bx, DIFF_BANK , REFRESH  , PRECHARGE} ,
             {1'bx, DIFF_BANK , REFRESH  , ACTIVATE } ,
             {1'bx, DIFF_BANK , REFRESH  , ZQ       } ,
-            {1'bx, DIFF_BANK , REFRESH  , SELF_REF } : begin if ($time - tm_refresh < TRFC_MIN)                                                                                $display ("%m: at time %t ERROR:  tRFC violation during %s (%t < %t)", $time, cmd_string[cmd],$time - tm_refresh,TRFC_MIN);                         end
+            {1'bx, DIFF_BANK , REFRESH  , SELF_REF } : begin if ($time - tm_refresh < TRFC_MIN)                                                                                $display ("%m: at time %t ERROR:  tRFC violation during %s", $time, cmd_string[cmd]);                         end
             {1'bx, DIFF_BANK , REFRESH  , PWR_DOWN } : begin if (ck_cntr - ck_refresh < TREFPDEN)                                                                              $display ("%m: at time %t ERROR:  tREFPDEN violation during %s", $time, cmd_string[cmd]);                     end
 
             // precharge
-            {1'bx, SAME_BANK , PRECHARGE, ACTIVATE } : begin if ($time - tm_bank_precharge[bank] < TRP-TJIT_PER)                                                               $display ("%m: at time %t ERROR:   tRP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end 
+            {1'bx, SAME_BANK , PRECHARGE, ACTIVATE } : begin if ($time - tm_bank_precharge[bank] < TRP-TJIT_PER)                                                               $display ("%m: at time %t ERROR:   tRP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
             {1'bx, DIFF_BANK , PRECHARGE, LOAD_MODE} ,
             {1'bx, DIFF_BANK , PRECHARGE, REFRESH  } ,
             {1'bx, DIFF_BANK , PRECHARGE, SELF_REF } : begin if ($time - tm_precharge < TRP-TJIT_PER)                                                                          $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , PRECHARGE, ZQ       } : 
-          begin if ($time - tm_precharge < TRP)                                                                                   $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
+            {1'bx, DIFF_BANK , PRECHARGE, ZQ       } :
+	      begin if ($time - tm_precharge < TRP)                                                                                   $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
             {1'bx, DIFF_BANK , PRECHARGE, PWR_DOWN } : ; //tPREPDEN = 1 tCK, can be concurrent with auto precharge
 
             // activate
@@ -1048,7 +1003,7 @@ module ddr3 (
             {1'bx, DIFF_BANK , PWR_DOWN , ACTIVATE } ,
             {1'bx, DIFF_BANK , PWR_DOWN , WRITE    } ,
             {1'bx, DIFF_BANK , PWR_DOWN , ZQ       } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , PWR_DOWN , READ     } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);                            
+            {1'bx, DIFF_BANK , PWR_DOWN , READ     } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
                                                         else if (($time - tm_slow_exit_pd < TXPDLL) || (ck_cntr - ck_slow_exit_pd < TXPDLL_TCK))                               $display ("%m: at time %t ERROR:  tXPDLL violation during %s", $time, cmd_string[cmd]);                       end
             {1'bx, DIFF_BANK , PWR_DOWN , PWR_DOWN } ,
             {1'bx, DIFF_BANK , PWR_DOWN , SELF_REF } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
@@ -1102,8 +1057,6 @@ module ddr3 (
                 end
                 case (cmd)
                     LOAD_MODE : begin
-
-                        $display("LOAD_MODE: bank %d", bank);
                         if (|odt_pipeline)
                             $display ("%m: at time %t ERROR: ODTL violation during %s", $time, cmd_string[cmd]);
                         if (odt_state && !feature_odt_hi)
@@ -1170,14 +1123,14 @@ module ddr3 (
                                         $display ("%m: at time %t ERROR: %s %d Illegal DLL Reset = %d", $time, cmd_string[cmd], bank, dll_reset);
                                     end
 
-                                   // Write Recovery
-                                   if (addr[11:9] == 0) begin
-                                      write_recovery  = 16;
-                                   end else if (addr[11:9] < 4) begin
-                                      write_recovery  = addr[11:9] + 4;
-                                   end else begin
-                                      write_recovery  = 2*addr[11:9];
-                                   end
+								   // Write Recovery
+								   if (addr[11:9] == 0) begin
+									  write_recovery  = 16;
+								   end else if (addr[11:9] < 4) begin
+									  write_recovery  = addr[11:9] + 4;
+								   end else begin
+									  write_recovery  = 2*addr[11:9];
+								   end
 
                                     if ((write_recovery >= WR_MIN) && (write_recovery <= WR_MAX)) begin
                                         if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Recovery = %d", $time, cmd_string[cmd], bank, write_recovery);
@@ -1264,15 +1217,15 @@ module ddr3 (
                                         if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Disabled", $time, cmd_string[cmd], bank);
                                     end else if (tdqs_en) begin
                                         if (8 == DQ_BITS) begin
-                                            if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Enabled", $time, cmd_string[cmd], bank);
+										    if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Enabled", $time, cmd_string[cmd], bank);
                                         end
-                                        else begin
+									    else begin
                                             $display ("%m: at time %t WARNING: %s %d Illegal TDQS Enable.  TDQS only exists on a x8 part", $time, cmd_string[cmd], bank);
                                             tdqs_en = 0;
-                                        end   
+										end
                                     end else begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal TDQS Enable = %d", $time, cmd_string[cmd], bank, tdqs_en);
-                                    end 
+                                    end
                                     // Output Enable
                                     out_en = !addr[12];
                                     if (!out_en) begin
@@ -1281,14 +1234,14 @@ module ddr3 (
                                         if (DEBUG) $display ("%m: at time %t INFO: %s %d Qoff = Enabled", $time, cmd_string[cmd], bank);
                                     end else begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal Qoff = %d", $time, cmd_string[cmd], bank, out_en);
-                                    end 
+                                    end
                                     // Reserved
                                     if (ADDR_BITS>13 && addr[13] !== 0 && check_strict_mrbits) begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
                                     end
                                 end
                                 2 : begin
-                                    if (feature_pasr) begin
+								    if (feature_pasr) begin
                                         // Partial Array Self Refresh
                                         pasr = addr[2:0];
                                         case (pasr)
@@ -1301,9 +1254,9 @@ module ddr3 (
                                             3'b110 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 6-7", $time, cmd_string[cmd], bank);
                                             3'b111 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 7", $time, cmd_string[cmd], bank);
                                             default : $display ("%m: at time %t ERROR: %s %d Illegal Partial Array Self Refresh = %d", $time, cmd_string[cmd], bank, pasr);
-                                        endcase 
-                                    end 
-                                    else
+                                        endcase
+									end
+								    else
                                     if (addr[2:0] !== 0 && check_strict_mrbits) begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
                                     end
@@ -1324,7 +1277,7 @@ module ddr3 (
                                         if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Auto Self Refresh is not modeled", $time, cmd_string[cmd], bank);
                                     end else begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal Auto Self Refresh = %d", $time, cmd_string[cmd], bank, asr);
-                                    end 
+                                    end
                                     // Self Refresh Temperature
                                     srt = addr[7];
                                     if (!srt) begin
@@ -1334,7 +1287,7 @@ module ddr3 (
                                         if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Self Refresh Temperature is not modeled", $time, cmd_string[cmd], bank);
                                     end else begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal Self Refresh Temperature = %d", $time, cmd_string[cmd], bank, srt);
-                                    end 
+                                    end
                                     if (asr && srt)
                                         $display ("%m: at time %t ERROR: %s %d SRT must be set to 0 when ASR is enabled.", $time, cmd_string[cmd], bank);
                                     // Reserved
@@ -1374,7 +1327,7 @@ module ddr3 (
                                         if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Enable = Enabled", $time, cmd_string[cmd], bank);
                                     end else begin
                                         $display ("%m: at time %t ERROR: %s %d Illegal MultiPurpose Register Enable = %d", $time, cmd_string[cmd], bank, mpr_en);
-                                    end 
+                                    end
 
                                     if (feature_truebl4 && (addr[11] == 1'b1)) begin
                                      if (addr[11] == 1'b1) begin
@@ -1393,9 +1346,9 @@ module ddr3 (
                                 $display ("%m: at time %t ERROR: Dynamic ODT is not available during Write Leveling mode.", $time);
                             init_mode_reg[bank] = 1;
                             mode_reg[bank] = addr;
-                // dll_reset bit self clear
-                if(bank==0 && addr[8]==1'b1)
-                  mode_reg[0][8] <= #($rtoi(tck_avg)) 1'b0;
+			    // dll_reset bit self clear
+			    if(bank==0 && addr[8]==1'b1)
+			      mode_reg[0][8] <= #($rtoi(tck_avg)) 1'b0;
                             tm_load_mode <= $time;
                             ck_load_mode <= ck_cntr;
                         end
@@ -1419,7 +1372,7 @@ module ddr3 (
                         if (addr[AP]) begin
                             if (DEBUG) $display ("%m: at time %t INFO: %s All", $time, cmd_string[cmd]);
                         end
-                        // PRECHARGE command will be treated as a NOP if there is no open row in that bank (idle state), 
+                        // PRECHARGE command will be treated as a NOP if there is no open row in that bank (idle state),
                         // or if the previously open row is already in the process of precharging
                         if (|active_bank) begin
                             if (($time - tm_txpr < TXPR) || (ck_cntr - ck_txpr < TXPR_TCK))
@@ -1677,16 +1630,16 @@ module ddr3 (
                 if (!init_done) begin
                     case (init_step)
                         0 : begin
-//                            if ($time - tm_rst_n < 500000000 && check_strict_timing) 
-//                                $display ("%m at time %t WARNING: 500 us is required after RST_N goes inactive before CKE goes active.", $time);
-                             if ($time - tm_rst_n < (SIMUL_500US * 1000000) && check_strict_timing) 
-                                $display ("%m at time %t WARNING: %d (actually 500) us is required after RST_N goes inactive before CKE goes active.", $time, SIMUL_500US);
-
+                            if ($time - tm_rst_n < 500000000 && check_strict_timing) 
+                                $display ("%m at time %t WARNING: 500 us is required after RST_N goes inactive before CKE goes active.", $time);
                             tm_txpr <= $time;
                             ck_txpr <= ck_cntr;
                             init_step = init_step + 1;
                         end
-                        1, 2 : begin
+                        1 : begin 
+                           if (dll_en) init_step = init_step + 1;
+                        end
+                        2 : begin
                             if (&init_mode_reg && init_dll_reset && zq_set) begin
                                 if (DEBUG) $display ("%m: at time %t INFO: Initialization Sequence is complete", $time);
                                 init_done = 1;
@@ -1721,7 +1674,7 @@ module ddr3 (
                             if (STOP_ON_ERROR) $stop(0);
                         end else begin
                             if (DEBUG) $display ("%m: at time %t INFO: Self Refresh Enter", $time);
-                            if (feature_pasr)
+						    if (feature_pasr)
                                 // Partial Array Self Refresh
                                 case (pasr)
                                     3'b000 : ;//keep Bank 0-7
@@ -1732,7 +1685,7 @@ module ddr3 (
                                     3'b101 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-3 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h0F); end
                                     3'b110 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-5 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h3F); end
                                     3'b111 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-6 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h7F); end
-                                endcase
+							    endcase
                             in_self_refresh = 1;
                             dll_locked = 0;
                         end
@@ -1936,7 +1889,7 @@ module ddr3 (
             end
             if (rdq_cntr > 0) begin // read data
                 if (mpr_en) begin
-`ifdef MPR_DQ0 // DQ0 output MPR data, other DQ low                
+`ifdef MPR_DQ0 // DQ0 output MPR data, other DQ low				   
                     if (mpr_select == 2'b00) begin // Calibration Pattern
                         dq_temp = {DQS_BITS{{`DQ_PER_DQS-1{1'b0}}, calibration_pattern[burst_position]}};
                     end else if (odts_readout && (mpr_select == 2'b11)) begin // Temp Sensor (ODTS)
@@ -1952,7 +1905,7 @@ module ddr3 (
                     end else begin // Reserved
                         dq_temp = {DQS_BITS{{`DQ_PER_DQS{1'bx}}}};
                     end
-`endif                 
+`endif				   
                     if (DEBUG) $display ("%m: at time %t READ @ DQS MultiPurpose Register %d, col = %d,  data = %b", $time, mpr_select, burst_position, dq_temp[0]);
                 end else begin
                     dq_temp = memory_data>>(burst_position*DQ_BITS);
@@ -2011,14 +1964,14 @@ module ddr3 (
             end else begin
                 if (dll_en)
                   if(diff_ck)
-                    out_delay = ($rtoi(tch_avg) > 50000) ? 0 : $rtoi(tch_avg);
+               	    out_delay = ($rtoi(tch_avg) > 50000) ? 0 : $rtoi(tch_avg);
                   else
-                    out_delay = ($rtoi(tcl_avg) > 50000) ? 0 : $rtoi(tcl_avg);
+               	    out_delay = ($rtoi(tcl_avg) > 50000) ? 0 : $rtoi(tcl_avg);
                 else
                   if(diff_ck)
-                    out_delay = ($rtoi(tch_avg) > 50000) ? 0 : $rtoi(tch_avg) + TDQSCK_DLLDIS;
+               	    out_delay = ($rtoi(tch_avg) > 50000) ? 0 : $rtoi(tch_avg) + TDQSCK_DLLDIS;
                   else
-                    out_delay = ($rtoi(tcl_avg) > 50000) ? 0 : $rtoi(tcl_avg) + TDQSCK_DLLDIS;
+               	    out_delay = ($rtoi(tcl_avg) > 50000) ? 0 : $rtoi(tcl_avg) + TDQSCK_DLLDIS;
                 dqs_out_en_dly <= #(out_delay) {DQS_BITS{dqs_out_en}};
                 dqs_out_dly    <= #(out_delay) {DQS_BITS{dqs_out   }};
                 if (write_levelization !== 1'b1) begin
@@ -2032,11 +1985,8 @@ module ddr3 (
     always @ (posedge rst_n_in) begin : reset
         integer i;
         if (rst_n_in) begin
-//            if ($time < 200000000 && check_strict_timing) 
-//                $display ("%m at time %t WARNING: 200 us is required before RST_N goes inactive.", $time);
-            if ($time < (SIMUL_200US * 1000000) && check_strict_timing) 
-                $display ("%m at time %t WARNING: %d (actually 200) us is required before RST_N goes inactive.", $time, SIMUL_200US);
-
+            if ($time < 200000000 && check_strict_timing) 
+                $display ("%m at time %t WARNING: 200 us is required before RST_N goes inactive.", $time);
             if (cke_in !== 1'b0)
                 $display ("%m: at time %t ERROR: CKE must be inactive when RST_N goes inactive.", $time);
             if ($time - tm_cke < 10000)
@@ -2046,7 +1996,7 @@ module ddr3 (
 `ifdef MAX_MEM
             // verification group does not erase memory
     //    for (banki = 0; banki < `BANKS; banki = banki + 1) begin
-    //            $fclose(memfd[banki]);
+    //	          $fclose(memfd[banki]);
     //            memfd[banki] = open_bank_file(banki);
     //    end
 `else
@@ -2095,8 +2045,14 @@ module ddr3 (
                     if ($time - tm_cke < TIS) 
                         $display ("%m: at time %t ERROR:   tIS violation on CKE by %t", $time, tm_cke + TIS - $time);
                     if (cke_in) begin
-                        for (i=0; i<23; i=i+1) begin
+                        for (i=0; i<3; i=i+1) begin
                             if ($time - tm_cmd_addr[i] < TIS) 
+                                $display ("%m: at time %t ERROR:   tIS violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIS - $time);
+                        end
+                    end
+                    if (cke_in & !(cs_n_in | (ras_n_in & cas_n_in & we_n_in))) begin // Bank and Address are don't care when DES or NOP
+                        for (i=4; i<23; i=i+1) begin
+                            if ($time - tm_cmd_addr[i] < TIS)
                                 $display ("%m: at time %t ERROR:   tIS violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIS - $time);
                         end
                     end
@@ -2108,20 +2064,18 @@ module ddr3 (
                         mr_chk = 1;
                     end else if (init_mode_reg[0] && (mr_chk == 1)) begin
                         // check CL value against the clock frequency
-                        if (cas_latency*tck_avg < CL_TIME && check_strict_timing)
-                            $display ("%m: at time %t ERROR: CAS Latency = %d is illegal @tCK(avg) = %f", $time, cas_latency, tck_avg);
                         // check WR value against the clock frequency
                         if (ceil(write_recovery*tck_avg) < TWR)
                             $display ("%m: at time %t ERROR: Write Recovery = %d is illegal @tCK(avg) = %f", $time, write_recovery, tck_avg);
                         // check the CWL value against the clock frequency
-                        if (check_strict_timing) begin 
+					    if (check_strict_timing) begin 
                             case (cas_write_latency)
                                 5 : if (tck_avg < 2500.0)                          $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
                                 6 : if ((tck_avg < 1875.0) || (tck_avg >= 2500.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
                                 7 : if ((tck_avg < 1500.0) || (tck_avg >= 1875.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
                                 8 : if ((tck_avg < 1250.0) || (tck_avg >= 1500.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
-                                9 : if ((tck_avg < 15e3/14) || (tck_avg >= 1250.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
-                                10: if ((tck_avg < 937.5) || (tck_avg >= 15e3/14)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
+                                9 : if ((tck_avg < 1071.0) || (tck_avg >= 1250.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
+                                10: if ((tck_avg < 937.5) || (tck_avg >= 1071.0)) $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
                                 default :                                          $display ("%m: at time %t ERROR: CWL = %d is illegal @tCK(avg) = %f", $time, cas_write_latency, tck_avg);
                             endcase
                             // check the CL value against the clock frequency
@@ -2184,7 +2138,7 @@ module ddr3 (
                     end
                 end
 
-           
+	       
                 // respond to incoming command
                 if (cke_in ^ prev_cke) begin
                     tm_cke_cmd <= $time;
@@ -2192,10 +2146,10 @@ module ddr3 (
                 end
 
 
-                cmd_task(prev_cke, cke_in, cmd_n_in, ba_in, addr_in);                                      
-                if ((cmd_n_in == WRITE) || (cmd_n_in == READ)) begin                                       
-                    al_pipeline[2*additive_latency] = 1'b1;                                        
-                end                                                            
+                cmd_task(prev_cke, cke_in, cmd_n_in, ba_in, addr_in);								       
+                if ((cmd_n_in == WRITE) || (cmd_n_in == READ)) begin								       
+                    al_pipeline[2*additive_latency] = 1'b1;									       
+                end														       
                 if (al_pipeline[0]) begin                                          
                     // check tRCD after additive latency
                     if ((rd_pipeline[2*cas_latency - 1]) && ($time - tm_bank_activate[ba_pipeline[2*cas_latency - 1]] < TRCD))
@@ -2220,9 +2174,9 @@ module ddr3 (
                   if (rd_pipeline[2*cas_latency - 1]) begin
                      tm_bank_read_end[ba_pipeline[2*cas_latency - 1]] <= $time;
                   end
-           end
+	       end
                 for (i=0; i<`BANKS; i=i+1) begin
-            if ((ck_cntr - ck_bank_write[i] > write_latency) && (ck_cntr - ck_bank_write[i] <= write_latency + burst_length/2)) begin
+		    if ((ck_cntr - ck_bank_write[i] > write_latency) && (ck_cntr - ck_bank_write[i] <= write_latency + burst_length/2)) begin
                         tm_bank_write_end[i] <= $time;
                         tm_group_write_end[i[1]] <= $time;
                         tm_write_end <= $time;
@@ -2259,7 +2213,7 @@ module ddr3 (
                                      11 : if (terr_nper_rtime - TERR_12PER >= 1.0) $display ("%m: at time %t ERROR: tERR(12per) violation by %f ps.", $time, terr_nper_rtime - TERR_12PER);
                             endcase
                         end
-                       
+					   
                         // check tCK min/max/jitter
                         if (abs_value(tjit_per_rtime) - TJIT_PER >= 1.0) 
                             $display ("%m: at time %t ERROR: tJIT(per) violation by %f ps.", $time, abs_value(tjit_per_rtime) - TJIT_PER);
@@ -2271,11 +2225,7 @@ module ddr3 (
                             $display ("%m: at time %t ERROR: tCK(avg) maximum violation by %f ps.", $time, tck_avg - TCK_MAX);
 
                         // check tCL
-`ifdef CVC
-                        if ((tm_ck_neg - $time < TCL_ABS_MIN*tck_avg) && (tm_ck_neg > $time))
-`else
                         if (tm_ck_neg - $time < TCL_ABS_MIN*tck_avg) 
-`endif
                             $display ("%m: at time %t ERROR: tCL(abs) minimum violation on CLK by %t", $time, TCL_ABS_MIN*tck_avg - tm_ck_neg + $time);
                         if (tcl_avg < TCL_AVG_MIN*tck_avg) 
                             $display ("%m: at time %t ERROR: tCL(avg) minimum violation on CLK by %t", $time, TCL_AVG_MIN*tck_avg - tcl_avg);
@@ -2284,11 +2234,11 @@ module ddr3 (
                     end
 
                     // calculate the tch avg jitter
-                    tch_avg = tch_avg - tch_sample[ck_cntr%TDLLK]/$itor(TDLLK);
-                    tch_avg = tch_avg + tch_i/$itor(TDLLK);
-                    tch_sample[ck_cntr%TDLLK] = tch_i;
+                    tch_avg = tch_avg - tch_sample[ck_cntr%PERTCKAVG]/$itor(PERTCKAVG);
+                    tch_avg = tch_avg + tch_i/$itor(PERTCKAVG);
+                    tch_sample[ck_cntr%PERTCKAVG] = tch_i;
                     tjit_ch_rtime = tch_i - tch_avg;
-                    duty_cycle = tch_avg/tck_avg;
+                    duty_cycle = $rtoi(tch_avg*100/tck_avg);
 
                     // update timers/counters
                     tcl_i <= $time - tm_ck_neg;
@@ -2309,11 +2259,11 @@ module ddr3 (
                         if (tch_avg > TCH_AVG_MAX*tck_avg) 
                             $display ("%m: at time %t ERROR: tCH(avg) maximum violation on CLK by %t", $time, tch_avg - TCH_AVG_MAX*tck_avg);
                     end
-                   
+				   
                     // calculate the tcl avg jitter
-                    tcl_avg = tcl_avg - tcl_sample[ck_cntr%TDLLK]/$itor(TDLLK);
-                    tcl_avg = tcl_avg + tcl_i/$itor(TDLLK);
-                    tcl_sample[ck_cntr%TDLLK] = tcl_i;
+                    tcl_avg = tcl_avg - tcl_sample[ck_cntr%PERTCKAVG]/$itor(PERTCKAVG);
+                    tcl_avg = tcl_avg + tcl_i/$itor(PERTCKAVG);
+                    tcl_sample[ck_cntr%PERTCKAVG] = tcl_i;
 
                     // update timers/counters
                     tch_i <= $time - tm_ck_pos;
@@ -2526,7 +2476,7 @@ module ddr3 (
     reg [4:0] i;
     begin
         if (rst_n_in && prev_cke) begin
-            if ((i == 0) && ($time - tm_ck_pos < TIH))                 // always check tIH for CS#
+            if ((i == 0) && ($time - tm_ck_pos < TIH))	               // always check tIH for CS#
                 $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);
             if ((i > 0) && (cs_n_in == 0) &&($time - tm_ck_pos < TIH)) // Only check tIH for cmd_addr if CS# is low
                 $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);

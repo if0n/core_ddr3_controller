@@ -2,6 +2,10 @@
 
 `define FPGA
 
+`define den2048Mb
+// `define sg125
+// `define x16
+
 `define range(i,COLUMN_WIDTH)                   ((i) + 1) * (COLUMN_WIDTH) - 1                  : (i) * (COLUMN_WIDTH)
 `define range_n(i,COLUMN_WIDTH,n)               (i) * (COLUMN_WIDTH) + (n) - 1                  : (i) * (COLUMN_WIDTH)
 `define range_x(i,COLUMN_WIDTH,x)               (i + x) * (COLUMN_WIDTH)   - 1                  : (i) * (COLUMN_WIDTH)
