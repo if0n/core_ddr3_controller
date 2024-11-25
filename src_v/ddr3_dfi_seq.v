@@ -42,23 +42,21 @@ module ddr3_dfi_seq
 // Ports
 //-----------------------------------------------------------------
 (
-    // Inputs
      input           clk_i
     ,input           rst_i
+
     ,input  [ 14:0]  address_i
     ,input  [  2:0]  bank_i
     ,input  [  3:0]  command_i
     ,input           cke_i
+    ,output          accept_o
+
     ,input  [127:0]  wrdata_i
     ,input  [ 15:0]  wrdata_mask_i
-    ,input  [ 31:0]  dfi_rddata_i
-    ,input           dfi_rddata_valid_i
-    ,input  [  1:0]  dfi_rddata_dnv_i
 
-    // Outputs
-    ,output          accept_o
-    ,output [127:0]  rddata_o
     ,output          rddata_valid_o
+    ,output [127:0]  rddata_o
+
     ,output [ 14:0]  dfi_address_o
     ,output [  2:0]  dfi_bank_o
     ,output          dfi_cas_n_o
@@ -72,6 +70,9 @@ module ddr3_dfi_seq
     ,output          dfi_wrdata_en_o
     ,output [  3:0]  dfi_wrdata_mask_o
     ,output          dfi_rddata_en_o
+    ,input  [ 31:0]  dfi_rddata_i
+    ,input           dfi_rddata_valid_i
+    ,input  [  1:0]  dfi_rddata_dnv_i
 );
 
 

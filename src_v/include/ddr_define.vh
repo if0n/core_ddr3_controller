@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 
 `define FPGA
+`define XILINX_SIMULATOR
 
 `define den2048Mb
 // `define sg125
