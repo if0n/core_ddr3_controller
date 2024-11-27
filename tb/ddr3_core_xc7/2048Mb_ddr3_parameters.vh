@@ -371,7 +371,7 @@
     parameter TDQSS            =    0.25; // tDQSS      tCK   Rising clock edge to DQS/DQS# latching transition
     parameter TDSS             =    0.20; // tDSS       tCK   DQS falling edge to CLK rising (setup time)
     parameter TDSH             =    0.20; // tDSH       tCK   DQS falling edge from CLK rising (hold time)
-    parameter TDQSCK           =     400 + 7000; // tDQSCK     ps    DQS output access time from CK/CK#
+    parameter TDQSCK           =     400; // tDQSCK     ps    DQS output access time from CK/CK#
     parameter TQSH             =    0.38; // tQSH       tCK   DQS Output High Pulse Width
     parameter TQSL             =    0.38; // tQSL       tCK   DQS Output Low Pulse Width
     parameter TDIPW            =     600; // tDIPW      ps    DQ and DM input Pulse Width
