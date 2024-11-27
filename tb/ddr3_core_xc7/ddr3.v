@@ -194,36 +194,36 @@ module ddr3 (
     integer seed;
 
     // Mode Registers
-    reg     [ADDR_BITS-1:0] mode_reg [`BANKS-1:0];
-    reg     burst_order;
-    reg     [BL_BITS:0] burst_length;
-    reg     blotf;
-    reg     truebl4;
-    integer cas_latency;
-    reg     dll_reset;
-    reg     dll_locked;
-    integer write_recovery;
-    reg     low_power;
-    reg     dll_en;
-    reg     [2:0] odt_rtt_nom;
-    reg     [1:0] odt_rtt_wr;
-    reg     odt_en;
-    reg     dyn_odt_en;
-    reg     [1:0] al;
-    integer additive_latency;
-    reg     write_levelization;
-    reg     duty_cycle_corrector;
-    reg     tdqs_en;
-    reg     out_en;
-    reg     [2:0] pasr;
-    integer cas_write_latency;
-    reg     asr; // auto self refresh
-    reg     srt; // self refresh temperature range
-    reg     [1:0] mpr_select;
-    reg     mpr_en;
-    reg     odts_readout;
-    integer read_latency;
-    integer write_latency;
+    reg     [ADDR_BITS-1:0]     mode_reg    [`BANKS-1:0]    ;
+    reg                         burst_order                 ;
+    reg     [BL_BITS:0]         burst_length                ;
+    reg                         blotf                       ;
+    reg                         truebl4                     ;
+    integer                     cas_latency                 ;
+    reg                         dll_reset                   ;
+    reg                         dll_locked                  ;
+    integer                     write_recovery              ;
+    reg                         low_power                   ;
+    reg                         dll_en                      ;
+    reg     [2:0]               odt_rtt_nom                 ;
+    reg     [1:0]               odt_rtt_wr                  ;
+    reg                         odt_en                      ;
+    reg                         dyn_odt_en                  ;
+    reg     [1:0]               al                          ;
+    integer                     additive_latency            ;
+    reg                         write_levelization          ;
+    reg                         duty_cycle_corrector        ;
+    reg                         tdqs_en                     ;
+    reg                         out_en                      ;
+    reg     [2:0]               pasr                        ;
+    integer                     cas_write_latency           ;
+    reg                         asr                         ;   // auto self refresh
+    reg                         srt                         ;   // self refresh temperature range
+    reg     [1:0]               mpr_select                  ;
+    reg                         mpr_en                      ;
+    reg                         odts_readout                ;
+    integer                     read_latency                ;
+    integer                     write_latency               ;
 
     // cmd encoding
     parameter     // {cs, ras, cas, we}
@@ -255,29 +255,29 @@ module ddr3 (
     end
 
     // command state
-    reg     [`BANKS-1:0] active_bank;
-    reg     [`BANKS-1:0] auto_precharge_bank;
-    reg     [`BANKS-1:0] write_precharge_bank;
-    reg     [`BANKS-1:0] read_precharge_bank;
-    reg     [ROW_BITS-1:0] active_row [`BANKS-1:0];
-    reg     in_power_down;
-    reg     in_self_refresh;
-    reg     [3:0] init_mode_reg;
-    reg     init_dll_reset;
-    reg     init_done;
-    integer init_step;
-    reg     zq_set;
-    reg     er_trfc_max;
-    reg     odt_state;
-    reg     odt_state_dly;
-    reg     dyn_odt_state;
-    reg     dyn_odt_state_dly;
-    reg     prev_odt;
-    wire    [7:0] calibration_pattern = 8'b10101010; // value returned during mpr pre-defined pattern readout
-    wire    [7:0] temp_sensor = 8'h01; // value returned during mpr temp sensor readout
-    reg     [1:0] mr_chk;
-    reg     rd_bc;
-    integer banki;
+    reg     [`BANKS-1:0]    active_bank;
+    reg     [`BANKS-1:0]    auto_precharge_bank;
+    reg     [`BANKS-1:0]    write_precharge_bank;
+    reg     [`BANKS-1:0]    read_precharge_bank;
+    reg     [ROW_BITS-1:0]  active_row [`BANKS-1:0];
+    reg                     in_power_down;
+    reg                     in_self_refresh;
+    reg     [3:0]           init_mode_reg;
+    reg                     init_dll_reset;
+    reg                     init_done;
+    integer                 init_step;
+    reg                     zq_set;
+    reg                     er_trfc_max;
+    reg                     odt_state;
+    reg                     odt_state_dly;
+    reg                     dyn_odt_state;
+    reg                     dyn_odt_state_dly;
+    reg                     prev_odt;
+    wire    [7:0]           calibration_pattern = 8'b10101010; // value returned during mpr pre-defined pattern readout
+    wire    [7:0]           temp_sensor = 8'h01; // value returned during mpr temp sensor readout
+    reg     [1:0]           mr_chk;
+    reg                     rd_bc;
+    integer                 banki;
 
 
 
@@ -328,35 +328,35 @@ module ddr3 (
     time    tm_group_write_end [1:0];
 
     // pipelines
-    reg     [`MAX_PIPE:0]  al_pipeline;
-    reg     [`MAX_PIPE:0]  wr_pipeline;
-    reg     [`MAX_PIPE:0]  rd_pipeline;
-    reg     [`MAX_PIPE:0]  odt_pipeline;
-    reg     [`MAX_PIPE:0]  dyn_odt_pipeline;
-    reg     [BL_BITS:0]    bl_pipeline  [`MAX_PIPE:0];
-    reg     [BA_BITS-1:0]  ba_pipeline  [`MAX_PIPE:0];
-    reg     [ROW_BITS-1:0] row_pipeline [`MAX_PIPE:0];
-    reg     [COL_BITS-1:0] col_pipeline [`MAX_PIPE:0];
-    reg     prev_cke;
+    reg     [`MAX_PIPE:0]       al_pipeline;
+    reg     [`MAX_PIPE:0]       wr_pipeline;
+    reg     [`MAX_PIPE:0]       rd_pipeline;
+    reg     [`MAX_PIPE:0]       odt_pipeline;
+    reg     [`MAX_PIPE:0]       dyn_odt_pipeline;
+    reg     [BL_BITS:0]         bl_pipeline  [`MAX_PIPE:0];
+    reg     [BA_BITS-1:0]       ba_pipeline  [`MAX_PIPE:0];
+    reg     [ROW_BITS-1:0]      row_pipeline [`MAX_PIPE:0];
+    reg     [COL_BITS-1:0]      col_pipeline [`MAX_PIPE:0];
+    reg                         prev_cke;
 
-    reg [5:0] cmd_tran_index, cmd_tran_i;
-    reg [63:0] cmd_tran_pipeline;
-    reg [2:0]  cmd_n_in_pipeline  [63:0];
-    reg [BA_BITS-1:0] ba_in_pipeline [63:0];
-    reg [ADDR_BITS-1:0] addr_in_pipeline [63:0];
+    reg     [5:0]               cmd_tran_index, cmd_tran_i;
+    reg     [63:0]              cmd_tran_pipeline;
+    reg     [2:0]               cmd_n_in_pipeline   [63:0];
+    reg     [BA_BITS-1:0]       ba_in_pipeline      [63:0];
+    reg     [ADDR_BITS-1:0]     addr_in_pipeline    [63:0];
 
     // data state
-    reg     [BL_MAX*DQ_BITS-1:0] memory_data;
-    reg     [BL_MAX*DQ_BITS-1:0] bit_mask;
-    reg     [BL_BITS-1:0]        burst_position;
-    reg     [BL_BITS:0]          burst_cntr;
-    reg     [DQ_BITS-1:0]        dq_temp;
-    reg     [63:0] check_write_postamble;
-    reg     [63:0] check_write_preamble;
-    reg     [63:0] check_write_dqs_high;
-    reg     [63:0] check_write_dqs_low;
-    reg     [31:0] check_dm_tdipw;
-    reg     [127:0] check_dq_tdipw;
+    reg     [BL_MAX*DQ_BITS-1:0]    memory_data;
+    reg     [BL_MAX*DQ_BITS-1:0]    bit_mask;
+    reg     [BL_BITS-1:0]           burst_position;
+    reg     [BL_BITS:0]             burst_cntr;
+    reg     [DQ_BITS-1:0]           dq_temp;
+    reg     [63:0]                  check_write_postamble;
+    reg     [63:0]                  check_write_preamble;
+    reg     [63:0]                  check_write_dqs_high;
+    reg     [63:0]                  check_write_dqs_low;
+    reg     [31:0]                  check_dm_tdipw;
+    reg     [127:0]                 check_dq_tdipw;
 
     // data timers/counters
     time    tm_rst_n;
@@ -370,6 +370,7 @@ module ddr3 (
     time    tm_dqs_neg  [63:0];
     time    tm_dq       [127:0];
     time    tm_cmd_addr [23:0];
+
     reg [8*7-1:0] cmd_addr_string [23:0];
     initial begin
         cmd_addr_string[ 0] = "CS_N   ";
@@ -415,7 +416,7 @@ module ddr3 (
 
     initial
     begin : file_io_open
-        reg [BA_BITS - 1 : 0] bank;
+        reg [BA_BITS - 1 : 0]  bank;
         reg [ROW_BITS - 1 : 0] row;
         reg [COL_BITS - 1 : 0] col;
         reg [BA_BITS + ROW_BITS + COL_BITS - 1 : 0] addr;
@@ -436,25 +437,25 @@ module ddr3 (
             memfd[i] = open_bank_file(i);
 
         // Preload section
-    `ifdef mem_init
-        in = $fopen("mem_init.txt","r");
-        while (! $feof(in)) begin
-            fio_status = $fscanf(in, "%h %s %h", addr, _char, data);
-            if (fio_status != -1) begin // Check for blank line or EOF
-                bank = addr [BA_BITS + ROW_BITS + COL_BITS - 1 : ROW_BITS + COL_BITS];
-                row = addr [ROW_BITS + COL_BITS - 1 : COL_BITS];
-                col = addr [COL_BITS - 1 : 0];
-                memory_write (bank, row, col, data);
-                // Next 4 lines are for debug only
-                $display ("MEMORY_WRITE: Bank = %h, Row = %h, Col = %h, Data = %h", bank, row, col, data);
-                data = 'hx; // This is to reset data to verify memory_read
-                memory_read(bank, row, col, data);
-                $display ("MEMORY_READ: Bank = %h, Row = %h, Col = %h, Data = %h", bank, row, col, data);
+        `ifdef mem_init
+            in = $fopen("mem_init.txt","r");
+            while (! $feof(in)) begin
+                fio_status = $fscanf(in, "%h %s %h", addr, _char, data);
+                if (fio_status != -1) begin // Check for blank line or EOF
+                    bank = addr [BA_BITS + ROW_BITS + COL_BITS - 1 : ROW_BITS + COL_BITS];
+                    row = addr [ROW_BITS + COL_BITS - 1 : COL_BITS];
+                    col = addr [COL_BITS - 1 : 0];
+                    memory_write (bank, row, col, data);
+                    // Next 4 lines are for debug only
+                    $display ("MEMORY_WRITE: Bank = %h, Row = %h, Col = %h, Data = %h", bank, row, col, data);
+                    data = 'hx; // This is to reset data to verify memory_read
+                    memory_read(bank, row, col, data);
+                    $display ("MEMORY_READ: Bank = %h, Row = %h, Col = %h, Data = %h", bank, row, col, data);
+                end
             end
-        end
-        $fclose(in);
-        //$finish;
-    `endif
+            $fclose(in);
+            //$finish;
+        `endif
     end
 `else
     reg     [BL_MAX*DQ_BITS-1:0] memory  [0:`MEM_SIZE-1];
@@ -493,25 +494,25 @@ module ddr3 (
     reg     [63:0] prev_dqs_in;
     reg            diff_ck;
 
-    always @(rst_n  ) rst_n_in   <= #BUS_DELAY rst_n;
-    always @(ck     ) ck_in      <= #BUS_DELAY ck;
-    always @(ck_n   ) ck_n_in    <= #BUS_DELAY ck_n;
+    always @(rst_n  )       rst_n_in    <= #BUS_DELAY rst_n;
+    always @(ck     )       ck_in       <= #BUS_DELAY ck;
+    always @(ck_n   )       ck_n_in     <= #BUS_DELAY ck_n;
 
-    always @(cke    )
-      cke_in     <= #BUS_DELAY cke;
+    always @(cke    )       cke_in      <= #BUS_DELAY cke;
 
-    always @(cs_n   ) cs_n_in    <= #BUS_DELAY cs_n;
-    always @(ras_n  ) ras_n_in   <= #BUS_DELAY ras_n;
-    always @(cas_n  ) cas_n_in   <= #BUS_DELAY cas_n;
-    always @(we_n   ) we_n_in    <= #BUS_DELAY we_n;
-    always @(dm_tdqs) dm_in      <= #BUS_DELAY dm_tdqs;
-    always @(ba     ) ba_in      <= #BUS_DELAY ba;
-    always @(addr   ) addr_in    <= #BUS_DELAY addr;
-    always @(dq     ) dq_in      <= #BUS_DELAY dq;
-    always @(dqs or dqs_n) dqs_in <= #BUS_DELAY (dqs_n<<32) | dqs;
-    always @(odt    ) if (!feature_odt_hi) odt_in     <= #BUS_DELAY odt;
+    always @(cs_n   )       cs_n_in     <= #BUS_DELAY cs_n;
+    always @(ras_n  )       ras_n_in    <= #BUS_DELAY ras_n;
+    always @(cas_n  )       cas_n_in    <= #BUS_DELAY cas_n;
+    always @(we_n   )       we_n_in     <= #BUS_DELAY we_n;
+    always @(dm_tdqs)       dm_in       <= #BUS_DELAY dm_tdqs;
+    always @(ba     )       ba_in       <= #BUS_DELAY ba;
+    always @(addr   )       addr_in     <= #BUS_DELAY addr;
+    always @(dq     )       dq_in       <= #BUS_DELAY dq;
+    always @(dqs or dqs_n)  dqs_in      <= #BUS_DELAY (dqs_n<<32) | dqs;
+    always @(odt    )       if (!feature_odt_hi)
+                            odt_in     <= #BUS_DELAY odt;
     // create internal clock
-    always @(posedge ck_in) diff_ck <= ck_in;
+    always @(posedge ck_in)   diff_ck <= ck_in;
     always @(posedge ck_n_in) diff_ck <= ~ck_n_in;
 
 
@@ -521,7 +522,7 @@ module ddr3 (
     // wire    [3:0]  cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;  //deselect = nop
     reg  [3:0]  cmd_n_in;
     always @(cs_n_in or ras_n_in or cas_n_in or we_n_in)
-      cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;
+        cmd_n_in = !cs_n_in ? {ras_n_in, cas_n_in, we_n_in} : NOP;
 
     // transmit
     reg                    dqs_out_en;
@@ -537,14 +538,16 @@ module ddr3 (
     integer                rdqen_cntr;
     integer                rdq_cntr;
 
-    bufif1 buf_dqs    [DQS_BITS-1:0] (dqs,     dqs_out_dly,  dqs_out_en_dly & {DQS_BITS{out_en}     });
-    bufif1 buf_dqs_n  [DQS_BITS-1:0] (dqs_n,   ~dqs_out_dly, dqs_out_en_dly & {DQS_BITS{out_en}     });
-    bufif1 buf_dq     [DQ_BITS-1:0]  (dq,      dq_out_dly,   dq_out_en_dly  & {DQ_BITS {out_en}     });
+    bufif1 buf_dqs    [DQS_BITS-1:0] (dqs   , dqs_out_dly   , dqs_out_en_dly & {DQS_BITS{out_en}});
+    bufif1 buf_dqs_n  [DQS_BITS-1:0] (dqs_n , ~dqs_out_dly  , dqs_out_en_dly & {DQS_BITS{out_en}});
+    bufif1 buf_dq     [DQ_BITS-1:0]  (dq    , dq_out_dly    , dq_out_en_dly  & {DQ_BITS {out_en}});
+
     assign tdqs_n = {DQS_BITS{1'bz}};
 
     assign TZQCS   = max( 64, ceil( 80000/tck_avg));
-    assign TZQINIT =  max(512, ceil(640000/tck_avg));
-    assign TZQOPER =  max(256, ceil(320000/tck_avg));
+    assign TZQINIT = max(512, ceil(640000/tck_avg));
+    assign TZQOPER = max(256, ceil(320000/tck_avg));
+
     initial begin
         if (BL_MAX < 2)
             $display("%m ERROR: BL_MAX parameter must be >= 2.  \nBL_MAX = %d", BL_MAX);
@@ -557,37 +560,37 @@ module ddr3 (
         ck_cntr = 0;
     end
 
-    function integer get_rtt_wr;
-    input [1:0] rtt;
-    begin
-        get_rtt_wr = RZQ/{rtt[0], rtt[1], 1'b0};
-    end
+    function integer get_rtt_wr;    /// 根据写操作时的 ODT 设置（rtt），计算实际的终端电阻值
+        input [1:0] rtt;
+        begin
+            get_rtt_wr = RZQ/{rtt[0], rtt[1], 1'b0};
+        end
     endfunction
 
-    function integer get_rtt_nom;
-    input [2:0] rtt;
-    begin
-        case (rtt)
-            1: get_rtt_nom = RZQ/4;
-            2: get_rtt_nom = RZQ/2;
-            3: get_rtt_nom = RZQ/6;
-            4: get_rtt_nom = RZQ/12;
-            5: get_rtt_nom = RZQ/8;
-            default : get_rtt_nom = 0;
-        endcase
-    end
+    function integer get_rtt_nom;   /// 根据正常（空闲）状态下的 ODT 设置（rtt），计算实际的终端电阻值
+        input [2:0] rtt;
+        begin
+            case (rtt)
+                1: get_rtt_nom = RZQ/4;
+                2: get_rtt_nom = RZQ/2;
+                3: get_rtt_nom = RZQ/6;
+                4: get_rtt_nom = RZQ/12;
+                5: get_rtt_nom = RZQ/8;
+                default : get_rtt_nom = 0;
+            endcase
+        end
     endfunction
 
     // calculate the absolute value of a real number
     function real abs_value;
-    input arg;
-    real arg;
-    begin
-        if (arg < 0.0)
-            abs_value = -1.0 * arg;
-        else
-            abs_value = arg;
-    end
+        input arg;
+        real arg;
+        begin
+            if (arg < 0.0)
+                abs_value = -1.0 * arg;
+            else
+                abs_value = arg;
+        end
     endfunction
 
     function integer ceil;
@@ -650,7 +653,7 @@ module ddr3 (
     function [RFF_BITS:1] read_from_file(
         input integer fd,
         input integer index
-    );
+        );
         integer code;
         integer offset;
         reg [1024:1] msg;
@@ -699,7 +702,7 @@ module ddr3 (
         input integer fd,
         input integer index,
         input [RFF_BITS:1] data
-    );
+        );
         integer code;
         integer offset;
 
@@ -788,16 +791,17 @@ module ddr3 (
 
     task set_latency;
         begin
-            if (al == 0) begin
+            if (al == 0)    /// 模式寄存器配置al: MR1
                 additive_latency = 0;
-            end else begin
-                additive_latency = cas_latency - al;
-            end
-            if (dll_en)
-                read_latency = cas_latency + additive_latency;
+            else
+                additive_latency = cas_latency - al;    /// 加性延迟值
+
+            if (dll_en) /// dll使能，表示DLL是否启用
+                read_latency = cas_latency + additive_latency;  /// 读延迟 RL = CL + AL - (dll_en ? 0 : 1)
             else
                 read_latency = cas_latency + additive_latency - 1;
-            write_latency = cas_write_latency + additive_latency;
+
+            write_latency = cas_write_latency + additive_latency;   /// 写延迟 WL = CL + AL
         end
     endtask
 
@@ -809,37 +813,37 @@ module ddr3 (
         integer bank;
 
         begin
-
 `ifdef MAX_MEM
-        for (bank = 0; bank < `BANKS; bank = bank + 1)
-            if (banks[bank] === 1'b1) begin
-	        $fclose(memfd[bank]);
-                memfd[bank] = open_bank_file(bank);
-	    end
+            for (bank = 0; bank < `BANKS; bank = bank + 1)
+                if (banks[bank] === 1'b1) begin
+	                $fclose(memfd[bank]);
+                    memfd[bank] = open_bank_file(bank);
+	            end
 `else
-        memory_index = 0;
-        i = 0;
-        // remove the selected banks
-        for (memory_index=0; memory_index<memory_used; memory_index=memory_index+1) begin
-            ba = (address[memory_index]>>(ROW_BITS+COL_BITS-BL_BITS));
-            if (!banks[ba]) begin //bank is selected to keep
-                address[i] = address[memory_index];
-                memory[i] = memory[memory_index];
-                i = i + 1;
+            memory_index = 0;
+            i = 0;
+            // remove the selected banks
+            for (memory_index=0; memory_index<memory_used; memory_index=memory_index+1) begin
+                ba = (address[memory_index]>>(ROW_BITS+COL_BITS-BL_BITS));
+                if (!banks[ba]) begin //bank is selected to keep
+                    address[i] = address[memory_index];
+                    memory[i] = memory[memory_index];
+                    i = i + 1;
+                end
             end
-        end
-        // clean up the unused banks
-        for (memory_index=i; memory_index<memory_used; memory_index=memory_index+1) begin
-            address[memory_index] = 'bx;
-            memory[memory_index] = {8*DQ_BITS{1'bx}};
-        end
-        memory_used = i;
+            // clean up the unused banks
+            for (memory_index=i; memory_index<memory_used; memory_index=memory_index+1) begin
+                address[memory_index] = 'bx;
+                memory[memory_index] = {8*DQ_BITS{1'bx}};
+            end
+            memory_used = i;
 `endif
         end
     endtask
 
     // Before this task runs, the model must be in a valid state for precharge power down and out of reset.
     // After this task runs, NOP commands must be issued until TZQINIT has been met
+    /// 执行DDR内存模型的初始化序列
     task initialize;
         input [ADDR_BITS-1:0] mode_reg0;
         input [ADDR_BITS-1:0] mode_reg1;
@@ -847,13 +851,13 @@ module ddr3 (
         input [ADDR_BITS-1:0] mode_reg3;
         begin
             if (DEBUG) $display ("%m: at time %t INFO: Performing Initialization Sequence", $time);
-            cmd_task(prev_cke, 1,       NOP, 'bx, 'bx);
-            cmd_task(prev_cke, 1,        ZQ, 'bx, 'h400); //ZQCL
-            cmd_task(prev_cke, 1, LOAD_MODE, 3, mode_reg3);
-            cmd_task(prev_cke, 1, LOAD_MODE, 2, mode_reg2);
-            cmd_task(prev_cke, 1, LOAD_MODE, 1, mode_reg1);
-            cmd_task(prev_cke, 1, LOAD_MODE, 0, mode_reg0 | 'h100); // DLL Reset
-            cmd_task(prev_cke, 0,       NOP, 'bx, 'bx);
+            cmd_task(prev_cke, 1,       NOP, 'bx, 'bx               );  // 向内存设备发送一个 NOP 命令，通常用于占位或满足时序要求
+            cmd_task(prev_cke, 1,        ZQ, 'bx, 'h400             );  // ZQCL，长时间的ZQ校准，提供最精确的片上终端电阻（ODT）校准
+            cmd_task(prev_cke, 1, LOAD_MODE,   3, mode_reg3         );  // MR3
+            cmd_task(prev_cke, 1, LOAD_MODE,   2, mode_reg2         );  // MR2
+            cmd_task(prev_cke, 1, LOAD_MODE,   1, mode_reg1         );  // MR1
+            cmd_task(prev_cke, 1, LOAD_MODE,   0, mode_reg0 | 'h100 );  // MR0 | DLL Reset
+            cmd_task(prev_cke, 0,       NOP, 'bx, 'bx);                 // 发送 NOP 命令，并禁用时钟，使内存设备进入特定的空闲或省电状态
         end
     endtask
 
@@ -886,7 +890,6 @@ module ddr3 (
             read_precharge_bank  = 0;
 	        write_precharge_bank = 0;
             // require initialization sequence
-
             init_done            = 0;
 		    mpr_en              = 0;
             init_step           = 0;
@@ -907,8 +910,8 @@ module ddr3 (
             rd_pipeline         = 0;
             odt_pipeline        = 0;
             dyn_odt_pipeline    = 0;
-	    cmd_tran_pipeline   = 0;
-	    cmd_tran_index      = 0;
+	        cmd_tran_pipeline   = 0;
+	        cmd_tran_index      = 0;
         end
     endtask
 
@@ -917,817 +920,930 @@ module ddr3 (
     parameter DIFF_GROUP = 2'd2; // different bank, different group
 
     task chk_err;
-        input [1:0] relationship;
+        input [1:0]         relationship;
         input [BA_BITS-1:0] bank;
-        input [3:0] fromcmd;
-        input [3:0] cmd;
-        reg err;
-    begin
-//        $display ("truebl4 = %d, relationship = %d, fromcmd = %h, cmd = %h", truebl4, relationship, fromcmd, cmd);
-        casex ({truebl4, relationship, fromcmd, cmd})
-            // load mode
-            {1'bx, DIFF_BANK , LOAD_MODE, LOAD_MODE} : begin if (ck_cntr - ck_load_mode < TMRD)                                                                                $display ("%m: at time %t ERROR:  tMRD violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , LOAD_MODE, READ     } : begin if (($time - tm_load_mode < TMOD-TJIT_PER) || (ck_cntr - ck_load_mode < TMOD_TCK))                                $display ("%m: at time %t ERROR:  tMOD violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , LOAD_MODE, REFRESH  } ,
-            {1'bx, DIFF_BANK , LOAD_MODE, PRECHARGE} ,
-            {1'bx, DIFF_BANK , LOAD_MODE, ACTIVATE } ,
-            {1'bx, DIFF_BANK , LOAD_MODE, ZQ       } ,
-            {1'bx, DIFF_BANK , LOAD_MODE, PWR_DOWN } ,
-            {1'bx, DIFF_BANK , LOAD_MODE, SELF_REF } : begin if (($time - tm_load_mode < TMOD-TJIT_PER) || (ck_cntr - ck_load_mode < TMOD_TCK))                                $display ("%m: at time %t ERROR:  tMOD violation during %s", $time, cmd_string[cmd]);                         end
+        input [3:0]         fromcmd;
+        input [3:0]         cmd;
 
-            // refresh
-            {1'bx, DIFF_BANK , REFRESH  , LOAD_MODE} ,
-            {1'bx, DIFF_BANK , REFRESH  , REFRESH  } ,
-            {1'bx, DIFF_BANK , REFRESH  , PRECHARGE} ,
-            {1'bx, DIFF_BANK , REFRESH  , ACTIVATE } ,
-            {1'bx, DIFF_BANK , REFRESH  , ZQ       } ,
-            {1'bx, DIFF_BANK , REFRESH  , SELF_REF } : begin if ($time - tm_refresh < TRFC_MIN)                                                                                $display ("%m: at time %t ERROR:  tRFC violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , REFRESH  , PWR_DOWN } : begin if (ck_cntr - ck_refresh < TREFPDEN)                                                                              $display ("%m: at time %t ERROR:  tREFPDEN violation during %s", $time, cmd_string[cmd]);                     end
+        reg err;    /// no used
+        begin
+            // $display ("%m: at time %t: truebl4 = %d, relationship = %d, fromcmd = %s, cmd = %s", $time, truebl4, relationship, cmd_string[fromcmd], cmd_string[cmd]);
+            casex ({truebl4, relationship, fromcmd, cmd})
+                // load mode
+                {1'bx, DIFF_BANK , LOAD_MODE, LOAD_MODE} : begin if (ck_cntr - ck_load_mode < TMRD)
+                                                                    $display ("%m: at time %t ERROR:  tMRD violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , LOAD_MODE, READ     } ,
+                {1'bx, DIFF_BANK , LOAD_MODE, REFRESH  } ,
+                {1'bx, DIFF_BANK , LOAD_MODE, PRECHARGE} ,
+                {1'bx, DIFF_BANK , LOAD_MODE, ACTIVATE } ,
+                {1'bx, DIFF_BANK , LOAD_MODE, ZQ       } ,
+                {1'bx, DIFF_BANK , LOAD_MODE, PWR_DOWN } ,
+                {1'bx, DIFF_BANK , LOAD_MODE, SELF_REF } : begin if (($time - tm_load_mode < TMOD-TJIT_PER) || (ck_cntr - ck_load_mode < TMOD_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tMOD violation during %s", $time, cmd_string[cmd]);                         end
 
-            // precharge
-            {1'bx, SAME_BANK , PRECHARGE, ACTIVATE } : begin if ($time - tm_bank_precharge[bank] < TRP-TJIT_PER)                                                               $display ("%m: at time %t ERROR:   tRP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'bx, DIFF_BANK , PRECHARGE, LOAD_MODE} ,
-            {1'bx, DIFF_BANK , PRECHARGE, REFRESH  } ,
-            {1'bx, DIFF_BANK , PRECHARGE, SELF_REF } : begin if ($time - tm_precharge < TRP-TJIT_PER)                                                                          $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , PRECHARGE, ZQ       } :
-	      begin if ($time - tm_precharge < TRP)                                                                                   $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , PRECHARGE, PWR_DOWN } : ; //tPREPDEN = 1 tCK, can be concurrent with auto precharge
+                // refresh
+                {1'bx, DIFF_BANK , REFRESH  , LOAD_MODE} ,
+                {1'bx, DIFF_BANK , REFRESH  , REFRESH  } ,
+                {1'bx, DIFF_BANK , REFRESH  , PRECHARGE} ,
+                {1'bx, DIFF_BANK , REFRESH  , ACTIVATE } ,
+                {1'bx, DIFF_BANK , REFRESH  , ZQ       } ,
+                {1'bx, DIFF_BANK , REFRESH  , SELF_REF } : begin if ($time - tm_refresh < TRFC_MIN)
+                                                                    $display ("%m: at time %t ERROR:  tRFC violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , REFRESH  , PWR_DOWN } : begin if (ck_cntr - ck_refresh < TREFPDEN)
+                                                                    $display ("%m: at time %t ERROR:  tREFPDEN violation during %s", $time, cmd_string[cmd]);                     end
 
-            // activate
-            {1'bx, SAME_BANK , ACTIVATE , PRECHARGE} : begin if ($time - tm_bank_activate[bank] > TRAS_MAX)                                                                    $display ("%m: at time %t ERROR:  tRAS maximum violation during %s to bank %d", $time, cmd_string[cmd], bank);
-                                                             if ($time - tm_bank_activate[bank] < TRAS_MIN-TJIT_PER)                                                           $display ("%m: at time %t ERROR:  tRAS minimum violation during %s to bank %d", $time, cmd_string[cmd], bank);end
-            {1'bx, SAME_BANK , ACTIVATE , ACTIVATE } : begin if ($time - tm_bank_activate[bank] < TRC-TJIT_PER)                                                                $display ("%m: at time %t ERROR:   tRC violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'bx, SAME_BANK , ACTIVATE , WRITE    } ,
-            {1'bx, SAME_BANK , ACTIVATE , READ     } : ; // tRCD is checked outside this task
-            {1'b0, DIFF_BANK , ACTIVATE , ACTIVATE } : begin if (($time - tm_activate < TRRD) || (ck_cntr - ck_activate < TRRD_TCK))                                           $display ("%m: at time %t ERROR:  tRRD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_BANK , ACTIVATE , ACTIVATE } : begin if (($time - tm_group_activate[bank[1]] < TRRD) || (ck_cntr - ck_group_activate[bank[1]] < TRRD_TCK))             $display ("%m: at time %t ERROR:  tRRD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_GROUP, ACTIVATE , ACTIVATE } : begin if (($time - tm_activate < TRRD_DG) || (ck_cntr - ck_activate < TRRD_DG_TCK))                                     $display ("%m: at time %t ERROR:  tRRD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
-            {1'bx, DIFF_BANK , ACTIVATE , REFRESH  } : begin if ($time - tm_activate < TRC-TJIT_PER)                                                                           $display ("%m: at time %t ERROR:   tRC violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , ACTIVATE , PWR_DOWN } : begin if (ck_cntr - ck_activate < TACTPDEN)                                                                             $display ("%m: at time %t ERROR:  tACTPDEN violation during %s", $time, cmd_string[cmd]);                     end
+                // precharge
+                {1'bx, SAME_BANK , PRECHARGE, ACTIVATE } : begin if ($time - tm_bank_precharge[bank] < TRP-TJIT_PER)
+                                                                    $display ("%m: at time %t ERROR:   tRP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'bx, DIFF_BANK , PRECHARGE, LOAD_MODE} ,
+                {1'bx, DIFF_BANK , PRECHARGE, REFRESH  } ,
+                {1'bx, DIFF_BANK , PRECHARGE, SELF_REF } : begin if ($time - tm_precharge < TRP-TJIT_PER)
+                                                                    $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , PRECHARGE, ZQ       } : begin if ($time - tm_precharge < TRP)
+                                                                    $display ("%m: at time %t ERROR:   tRP violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , PRECHARGE, PWR_DOWN } :          ; //tPREPDEN = 1 tCK, can be concurrent with auto precharge
 
-            // write
-            {1'bx, SAME_BANK , WRITE    , PRECHARGE} : begin if (($time - tm_bank_write_end[bank] < TWR-TJIT_PER) || (ck_cntr - ck_bank_write[bank] <= write_latency + burst_length/2)) $display ("%m: at time %t ERROR:   tWR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b0, DIFF_BANK , WRITE    , WRITE    } : begin if (ck_cntr - ck_write < TCCD)                                                                                    $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_BANK , WRITE    , WRITE    } : begin if (ck_cntr - ck_group_write[bank[1]] < TCCD)                                                                     $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b0, DIFF_BANK , WRITE    , READ     } : begin if (ck_cntr - ck_write < write_latency + burst_length/2 + TWTR_TCK - additive_latency)                            $display ("%m: at time %t ERROR:  tWTR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_BANK , WRITE    , READ     } : begin if (ck_cntr - ck_group_write[bank[1]] < write_latency + burst_length/2 + TWTR_TCK - additive_latency)             $display ("%m: at time %t ERROR:  tWTR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_GROUP, WRITE    , WRITE    } : begin if (ck_cntr - ck_write < TCCD_DG)                                                                                 $display ("%m: at time %t ERROR:  tCCD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
-            {1'b1, DIFF_GROUP, WRITE    , READ     } : begin if (ck_cntr - ck_write < write_latency + burst_length/2 + TWTR_DG_TCK - additive_latency)                         $display ("%m: at time %t ERROR:  tWTR_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
-            {1'bx, DIFF_BANK , WRITE    , PWR_DOWN } : begin if (($time - tm_write_end < TWR-TJIT_PER) || (ck_cntr - ck_write < write_latency + burst_length/2))               $display ("%m: at time %t ERROR:  tWRPDEN violation during %s", $time, cmd_string[cmd]);                      end
+                // activate
+                {1'bx, SAME_BANK , ACTIVATE , PRECHARGE} : begin if ($time - tm_bank_activate[bank] > TRAS_MAX)
+                                                                    $display ("%m: at time %t ERROR:  tRAS maximum violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                                                                 if ($time - tm_bank_activate[bank] < TRAS_MIN-TJIT_PER)
+                                                                    $display ("%m: at time %t ERROR:  tRAS minimum violation during %s to bank %d", $time, cmd_string[cmd], bank);end
+                {1'bx, SAME_BANK , ACTIVATE , ACTIVATE } : begin if ($time - tm_bank_activate[bank] < TRC-TJIT_PER)
+                                                                    $display ("%m: at time %t ERROR:   tRC violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'bx, SAME_BANK , ACTIVATE , WRITE    } ,
+                {1'bx, SAME_BANK , ACTIVATE , READ     } :          ; // tRCD is checked outside this task
+                {1'b0, DIFF_BANK , ACTIVATE , ACTIVATE } : begin if (($time - tm_activate < TRRD) || (ck_cntr - ck_activate < TRRD_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tRRD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_BANK , ACTIVATE , ACTIVATE } : begin if (($time - tm_group_activate[bank[1]] < TRRD) || (ck_cntr - ck_group_activate[bank[1]] < TRRD_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tRRD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_GROUP, ACTIVATE , ACTIVATE } : begin if (($time - tm_activate < TRRD_DG) || (ck_cntr - ck_activate < TRRD_DG_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tRRD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
+                {1'bx, DIFF_BANK , ACTIVATE , REFRESH  } : begin if ($time - tm_activate < TRC-TJIT_PER)
+                                                                    $display ("%m: at time %t ERROR:   tRC violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , ACTIVATE , PWR_DOWN } : begin if (ck_cntr - ck_activate < TACTPDEN)
+                                                                    $display ("%m: at time %t ERROR:  tACTPDEN violation during %s", $time, cmd_string[cmd]);                     end
 
-            // read
-            {1'bx, SAME_BANK , READ     , PRECHARGE} : begin if (($time - tm_bank_read_end[bank] < TRTP-TJIT_PER) || (ck_cntr - ck_bank_read[bank] < additive_latency + TRTP_TCK)) $display ("%m: at time %t ERROR:  tRTP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b0, DIFF_BANK , READ     , WRITE    } : ; // tRTW is checked outside this task
-            {1'b1, DIFF_BANK , READ     , WRITE    } : ; // tRTW is checked outside this task
-            {1'b0, DIFF_BANK , READ     , READ     } : begin if (ck_cntr - ck_read < TCCD)                                                                                     $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_BANK , READ     , READ     } : begin if (ck_cntr - ck_group_read[bank[1]] < TCCD)                                                                      $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
-            {1'b1, DIFF_GROUP, READ     , WRITE    } : ; // tRTW is checked outside this task
-            {1'b1, DIFF_GROUP, READ     , READ     } : begin if (ck_cntr - ck_read < TCCD_DG)                                                                                  $display ("%m: at time %t ERROR:  tCCD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
-            {1'bx, DIFF_BANK , READ     , PWR_DOWN } : begin if (ck_cntr - ck_read < read_latency + 5)                                                                         $display ("%m: at time %t ERROR:  tRDPDEN violation during %s", $time, cmd_string[cmd]);                      end
+                // write
+                {1'bx, SAME_BANK , WRITE    , PRECHARGE} : begin if (($time - tm_bank_write_end[bank] < TWR-TJIT_PER) || (ck_cntr - ck_bank_write[bank] <= write_latency + burst_length/2))
+                                                                    $display ("%m: at time %t ERROR:   tWR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b0, DIFF_BANK , WRITE    , WRITE    } : begin if (ck_cntr - ck_write < TCCD)
+                                                                    $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_BANK , WRITE    , WRITE    } : begin if (ck_cntr - ck_group_write[bank[1]] < TCCD)
+                                                                    $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b0, DIFF_BANK , WRITE    , READ     } : begin if (ck_cntr - ck_write < write_latency + burst_length/2 + TWTR_TCK - additive_latency)
+                                                                    $display ("%m: at time %t ERROR:  tWTR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_BANK , WRITE    , READ     } : begin if (ck_cntr - ck_group_write[bank[1]] < write_latency + burst_length/2 + TWTR_TCK - additive_latency)
+                                                                    $display ("%m: at time %t ERROR:  tWTR violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_GROUP, WRITE    , WRITE    } : begin if (ck_cntr - ck_write < TCCD_DG)
+                                                                    $display ("%m: at time %t ERROR:  tCCD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
+                {1'b1, DIFF_GROUP, WRITE    , READ     } : begin if (ck_cntr - ck_write < write_latency + burst_length/2 + TWTR_DG_TCK - additive_latency)
+                                                                    $display ("%m: at time %t ERROR:  tWTR_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
+                {1'bx, DIFF_BANK , WRITE    , PWR_DOWN } : begin if (($time - tm_write_end < TWR-TJIT_PER) || (ck_cntr - ck_write < write_latency + burst_length/2))
+                                                                    $display ("%m: at time %t ERROR:  tWRPDEN violation during %s", $time, cmd_string[cmd]);                      end
 
-            // zq
-            {1'bx, DIFF_BANK , ZQ       , LOAD_MODE} : ; // 1 tCK
-            {1'bx, DIFF_BANK , ZQ       , REFRESH  } ,
-            {1'bx, DIFF_BANK , ZQ       , PRECHARGE} ,
-            {1'bx, DIFF_BANK , ZQ       , ACTIVATE } ,
-            {1'bx, DIFF_BANK , ZQ       , ZQ       } ,
-            {1'bx, DIFF_BANK , ZQ       , PWR_DOWN } ,
-            {1'bx, DIFF_BANK , ZQ       , SELF_REF } : begin if (ck_cntr - ck_zqinit < TZQINIT)                                                                                $display ("%m: at time %t ERROR:  tZQinit violation during %s", $time, cmd_string[cmd]);
-                                                             if (ck_cntr - ck_zqoper < TZQOPER)                                                                                $display ("%m: at time %t ERROR:  tZQoper violation during %s", $time, cmd_string[cmd]);
-                                                             if (ck_cntr - ck_zqcs < TZQCS)                                                                                    $display ("%m: at time %t ERROR:  tZQCS violation during %s", $time, cmd_string[cmd]);                        end
+                // read
+                {1'bx, SAME_BANK , READ     , PRECHARGE} : begin if (($time - tm_bank_read_end[bank] < TRTP-TJIT_PER) || (ck_cntr - ck_bank_read[bank] < additive_latency + TRTP_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tRTP violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b0, DIFF_BANK , READ     , WRITE    } :          ; // tRTW is checked outside this task
+                {1'b1, DIFF_BANK , READ     , WRITE    } :          ; // tRTW is checked outside this task
+                {1'b0, DIFF_BANK , READ     , READ     } : begin if (ck_cntr - ck_read < TCCD)
+                                                                    $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_BANK , READ     , READ     } : begin if (ck_cntr - ck_group_read[bank[1]] < TCCD)
+                                                                    $display ("%m: at time %t ERROR:  tCCD violation during %s to bank %d", $time, cmd_string[cmd], bank);        end
+                {1'b1, DIFF_GROUP, READ     , WRITE    } :          ; // tRTW is checked outside this task
+                {1'b1, DIFF_GROUP, READ     , READ     } : begin if (ck_cntr - ck_read < TCCD_DG)
+                                                                    $display ("%m: at time %t ERROR:  tCCD_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);     end
+                {1'bx, DIFF_BANK , READ     , PWR_DOWN } : begin if (ck_cntr - ck_read < read_latency + 5)
+                                                                    $display ("%m: at time %t ERROR:  tRDPDEN violation during %s", $time, cmd_string[cmd]);                      end
 
-            // power down
-            {1'bx, DIFF_BANK , PWR_DOWN , LOAD_MODE} ,
-            {1'bx, DIFF_BANK , PWR_DOWN , REFRESH  } ,
-            {1'bx, DIFF_BANK , PWR_DOWN , PRECHARGE} ,
-            {1'bx, DIFF_BANK , PWR_DOWN , ACTIVATE } ,
-            {1'bx, DIFF_BANK , PWR_DOWN , WRITE    } ,
-            {1'bx, DIFF_BANK , PWR_DOWN , ZQ       } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , PWR_DOWN , READ     } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
-                                                        else if (($time - tm_slow_exit_pd < TXPDLL) || (ck_cntr - ck_slow_exit_pd < TXPDLL_TCK))                               $display ("%m: at time %t ERROR:  tXPDLL violation during %s", $time, cmd_string[cmd]);                       end
-            {1'bx, DIFF_BANK , PWR_DOWN , PWR_DOWN } ,
-            {1'bx, DIFF_BANK , PWR_DOWN , SELF_REF } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))                                         $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
-                                                             if ((tm_power_down > tm_refresh) && ($time - tm_refresh < TRFC_MIN))                                              $display ("%m: at time %t ERROR:  tRFC violation during %s", $time, cmd_string[cmd]);
-                                                             if ((tm_refresh > tm_power_down) && (($time - tm_power_down < TXPDLL) || (ck_cntr - ck_power_down < TXPDLL_TCK))) $display ("%m: at time %t ERROR:  tXPDLL violation during %s", $time, cmd_string[cmd]);
-                                                             if (($time - tm_cke_cmd < TCKE) || (ck_cntr - ck_cke_cmd < TCKE_TCK))                                             $display ("%m: at time %t ERROR:  tCKE violation on CKE", $time);                                             end
+                // zq
+                {1'bx, DIFF_BANK , ZQ       , LOAD_MODE} :          ; // 1 tCK
+                {1'bx, DIFF_BANK , ZQ       , REFRESH  } ,
+                {1'bx, DIFF_BANK , ZQ       , PRECHARGE} ,
+                {1'bx, DIFF_BANK , ZQ       , ACTIVATE } ,
+                {1'bx, DIFF_BANK , ZQ       , ZQ       } ,
+                {1'bx, DIFF_BANK , ZQ       , PWR_DOWN } ,
+                {1'bx, DIFF_BANK , ZQ       , SELF_REF } : begin if (ck_cntr - ck_zqinit < TZQINIT)
+                                                                    $display ("%m: at time %t ERROR:  tZQinit violation during %s", $time, cmd_string[cmd]);
+                                                                 if (ck_cntr - ck_zqoper < TZQOPER)
+                                                                    $display ("%m: at time %t ERROR:  tZQoper violation during %s", $time, cmd_string[cmd]);
+                                                                 if (ck_cntr - ck_zqcs < TZQCS)
+                                                                    $display ("%m: at time %t ERROR:  tZQCS violation during %s", $time, cmd_string[cmd]);                        end
 
-            // self refresh
-            {1'bx, DIFF_BANK , SELF_REF , LOAD_MODE} ,
-            {1'bx, DIFF_BANK , SELF_REF , REFRESH  } ,
-            {1'bx, DIFF_BANK , SELF_REF , PRECHARGE} ,
-            {1'bx, DIFF_BANK , SELF_REF , ACTIVATE } ,
-            {1'bx, DIFF_BANK , SELF_REF , WRITE    } ,
-            {1'bx, DIFF_BANK , SELF_REF , ZQ       } : begin if (($time - tm_self_refresh < TXS) || (ck_cntr - ck_self_refresh < TXS_TCK))                                     $display ("%m: at time %t ERROR:   tXS violation during %s", $time, cmd_string[cmd]);                         end
-            {1'bx, DIFF_BANK , SELF_REF , READ     } : begin if (ck_cntr - ck_self_refresh < TXSDLL)                                                                           $display ("%m: at time %t ERROR:  tXSDLL violation during %s", $time, cmd_string[cmd]);                       end
-            {1'bx, DIFF_BANK , SELF_REF , PWR_DOWN } ,
-            {1'bx, DIFF_BANK , SELF_REF , SELF_REF } : begin if (($time - tm_self_refresh < TXS) || (ck_cntr - ck_self_refresh < TXS_TCK))                                     $display ("%m: at time %t ERROR:   tXS violation during %s", $time, cmd_string[cmd]);
-                                                             if (($time - tm_cke_cmd < TCKE) || (ck_cntr - ck_cke_cmd < TCKE_TCK))                                             $display ("%m: at time %t ERROR:  tCKE violation on CKE", $time);                                             end
-        endcase
-    end
+                // power down
+                {1'bx, DIFF_BANK , PWR_DOWN , LOAD_MODE} ,
+                {1'bx, DIFF_BANK , PWR_DOWN , REFRESH  } ,
+                {1'bx, DIFF_BANK , PWR_DOWN , PRECHARGE} ,
+                {1'bx, DIFF_BANK , PWR_DOWN , ACTIVATE } ,
+                {1'bx, DIFF_BANK , PWR_DOWN , WRITE    } ,
+                {1'bx, DIFF_BANK , PWR_DOWN , ZQ       } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))
+                                                                    $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , PWR_DOWN , READ     } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))
+                                                                    $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
+                                                                 else if (($time - tm_slow_exit_pd < TXPDLL) || (ck_cntr - ck_slow_exit_pd < TXPDLL_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tXPDLL violation during %s", $time, cmd_string[cmd]);                       end
+                {1'bx, DIFF_BANK , PWR_DOWN , PWR_DOWN } ,
+                {1'bx, DIFF_BANK , PWR_DOWN , SELF_REF } : begin if (($time - tm_power_down < TXP) || (ck_cntr - ck_power_down < TXP_TCK))
+                                                                    $display ("%m: at time %t ERROR:   tXP violation during %s", $time, cmd_string[cmd]);
+                                                                 if ((tm_power_down > tm_refresh) && ($time - tm_refresh < TRFC_MIN))
+                                                                    $display ("%m: at time %t ERROR:  tRFC violation during %s", $time, cmd_string[cmd]);
+                                                                 if ((tm_refresh > tm_power_down) && (($time - tm_power_down < TXPDLL) || (ck_cntr - ck_power_down < TXPDLL_TCK)))
+                                                                    $display ("%m: at time %t ERROR:  tXPDLL violation during %s", $time, cmd_string[cmd]);
+                                                                 if (($time - tm_cke_cmd < TCKE) || (ck_cntr - ck_cke_cmd < TCKE_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tCKE violation on CKE", $time);                                             end
+
+                // self refresh
+                {1'bx, DIFF_BANK , SELF_REF , LOAD_MODE} ,
+                {1'bx, DIFF_BANK , SELF_REF , REFRESH  } ,
+                {1'bx, DIFF_BANK , SELF_REF , PRECHARGE} ,
+                {1'bx, DIFF_BANK , SELF_REF , ACTIVATE } ,
+                {1'bx, DIFF_BANK , SELF_REF , WRITE    } ,
+                {1'bx, DIFF_BANK , SELF_REF , ZQ       } : begin if (($time - tm_self_refresh < TXS) || (ck_cntr - ck_self_refresh < TXS_TCK))
+                                                                    $display ("%m: at time %t ERROR:   tXS violation during %s", $time, cmd_string[cmd]);                         end
+                {1'bx, DIFF_BANK , SELF_REF , READ     } : begin if (ck_cntr - ck_self_refresh < TXSDLL)
+                                                                    $display ("%m: at time %t ERROR:  tXSDLL violation during %s", $time, cmd_string[cmd]);                       end
+                {1'bx, DIFF_BANK , SELF_REF , PWR_DOWN } ,
+                {1'bx, DIFF_BANK , SELF_REF , SELF_REF } : begin if (($time - tm_self_refresh < TXS) || (ck_cntr - ck_self_refresh < TXS_TCK))
+                                                                    $display ("%m: at time %t ERROR:   tXS violation during %s", $time, cmd_string[cmd]);
+                                                                 if (($time - tm_cke_cmd < TCKE) || (ck_cntr - ck_cke_cmd < TCKE_TCK))
+                                                                    $display ("%m: at time %t ERROR:  tCKE violation on CKE", $time);                                             end
+            endcase
+        end
     endtask
 
     task cmd_task;
-        inout prev_cke;
-        input cke;
-        input [2:0] cmd;
-        input [BA_BITS-1:0] bank;
-        input [ADDR_BITS-1:0] addr;
-        reg [`BANKS:0] i;
-        integer j;
-        reg [`BANKS:0] tfaw_cntr;
-        reg [COL_BITS-1:0] col;
-        reg group;
+        inout                       prev_cke;
+        input                       cke;
+        input   [2:0]               cmd;
+        input   [BA_BITS-1:0]       bank;
+        input   [ADDR_BITS-1:0]     addr;
+
+        reg     [`BANKS:0]          i;
+        integer                     j;
+        reg     [`BANKS:0]          tfaw_cntr;
+        reg     [COL_BITS-1:0]      col;
+
+        reg                         group;  /// noused
+
         begin
             // tRFC max check
             if (!er_trfc_max && !in_self_refresh) begin
-                if ($time - tm_refresh > TRFC_MAX && check_strict_timing) begin
+                if ((($time - tm_refresh) > TRFC_MAX) && check_strict_timing) begin
                     $display ("%m: at time %t ERROR:  tRFC maximum violation during %s", $time, cmd_string[cmd]);
                     er_trfc_max = 1;
                 end
             end
+
             if (cke) begin
+                /// LOAD_MODE = 4'b0000
+                /// REFRESH   = 4'b0001
+                /// PRECHARGE = 4'b0010
+                /// ACTIVATE  = 4'b0011
+                /// WRITE     = 4'b0100
+                /// READ      = 4'b0101
+                /// ZQ        = 4'b0110
+                /// NOP       = 4'b0111
+                /// PWR_DOWN  = 4'b1000
+                /// SELF_REF  = 4'b1001
                 if ((cmd < NOP) && (cmd != PRECHARGE)) begin
+                    /// tXPR check
                     if (($time - tm_txpr < TXPR) || (ck_cntr - ck_txpr < TXPR_TCK))
                         $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[cmd]);
+                    /// check err from fromcmd(prev_cmd) of all other type to cmd
                     for (j=0; j<=SELF_REF; j=j+1) begin
                         chk_err(SAME_BANK , bank, j, cmd);
                         chk_err(DIFF_BANK , bank, j, cmd);
                         chk_err(DIFF_GROUP, bank, j, cmd);
                     end
                 end
+
                 case (cmd)
-                    LOAD_MODE : begin
-                        if (|odt_pipeline)
-                            $display ("%m: at time %t ERROR: ODTL violation during %s", $time, cmd_string[cmd]);
-                        if (odt_state && !feature_odt_hi)
-                            $display ("%m: at time %t ERROR: ODT must be off prior to %s", $time, cmd_string[cmd]);
+                    //
+                    LOAD_MODE :
+                        begin
+                            if (|odt_pipeline)
+                                $display ("%m: at time %t ERROR: ODTL violation during %s", $time, cmd_string[cmd]);
+                            if (odt_state && !feature_odt_hi)
+                                $display ("%m: at time %t ERROR: ODT must be off prior to %s", $time, cmd_string[cmd]);
 
-                        if (|active_bank) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (DEBUG) $display ("%m: at time %t INFO: %s %d", $time, cmd_string[cmd], bank);
-                            if (bank>>2) begin
-                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved bank bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                            end
-                            case (bank)
-                                0 : begin
-                                    // Burst Length
-                                    if (addr[1:0] == 2'b00) begin
-                                        burst_length = 8;
-                                        blotf = 0;
-                                        truebl4 = 0;
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = %d", $time, cmd_string[cmd], bank, burst_length);
-                                    end else if (addr[1:0] == 2'b01) begin
-                                        burst_length = 8;
-                                        blotf = 1;
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = Select via A12", $time, cmd_string[cmd], bank);
-                                    end else if (addr[1:0] == 2'b10) begin
-                                        burst_length = 4;
-                                        blotf = 0;
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = Fixed %d (chop)", $time, cmd_string[cmd], bank, burst_length);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Burst Length = %d", $time, cmd_string[cmd], bank, addr[1:0]);
-                                    end
-                                    // Burst Order
-                                    burst_order = addr[3];
-                                    if (!burst_order) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Order = Sequential", $time, cmd_string[cmd], bank);
-                                    end else if (burst_order) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Order = Interleaved", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Burst Order = %d", $time, cmd_string[cmd], bank, burst_order);
-                                    end
-                                    // CAS Latency
-                                    cas_latency = {addr[2],addr[6:4]} + 4;
-                                    set_latency;
-                                    if ((cas_latency >= CL_MIN) && (cas_latency <= CL_MAX)) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d CAS Latency = %d", $time, cmd_string[cmd], bank, cas_latency);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal CAS Latency = %d", $time, cmd_string[cmd], bank, cas_latency);
-                                    end
-                                    // Reserved
-                                    if (addr[7] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                    // DLL Reset
-                                    dll_reset = addr[8];
-                                    if (!dll_reset) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Reset = Normal", $time, cmd_string[cmd], bank);
-                                    end else if (dll_reset) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Reset = Reset DLL", $time, cmd_string[cmd], bank);
-                                        dll_locked = 0;
-                                        init_dll_reset = 1;
-                                        ck_dll_reset <= ck_cntr;
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal DLL Reset = %d", $time, cmd_string[cmd], bank, dll_reset);
-                                    end
-
-								   // Write Recovery
-								   if (addr[11:9] == 0) begin
-									  write_recovery  = 16;
-								   end else if (addr[11:9] < 4) begin
-									  write_recovery  = addr[11:9] + 4;
-								   end else begin
-									  write_recovery  = 2*addr[11:9];
-								   end
-
-                                    if ((write_recovery >= WR_MIN) && (write_recovery <= WR_MAX)) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Recovery = %d", $time, cmd_string[cmd], bank, write_recovery);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Write Recovery = %d", $time, cmd_string[cmd], bank, write_recovery);
-                                    end
-                                    // Power Down Mode
-                                    low_power = !addr[12];
-                                    if (!low_power) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Power Down Mode = DLL on", $time, cmd_string[cmd], bank);
-                                    end else if (low_power) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Power Down Mode = DLL off", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Power Down Mode = %d", $time, cmd_string[cmd], bank, low_power);
-                                    end
-                                    // Reserved
-                                    if (ADDR_BITS>13 && addr[13] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
+                            if (|active_bank) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else begin
+                                if (DEBUG) $display ("%m: at time %t INFO: %s %d", $time, cmd_string[cmd], bank);
+                                if (bank>>2) begin
+                                    $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved bank bits must be programmed to zero", $time, cmd_string[cmd], bank);
                                 end
-                                1 : begin
-                                    // DLL Enable
-                                    dll_en = !addr[0];
-                                    if (!dll_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Enable = Disabled", $time, cmd_string[cmd], bank);
-                                        if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d DLL off mode is not fully modeled", $time, cmd_string[cmd], bank);
-                                    end else if (dll_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Enable = Enabled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal DLL Enable = %d", $time, cmd_string[cmd], bank, dll_en);
-                                    end
-                                    // Output Drive Strength
-                                    if ({addr[5], addr[1]} == 2'b00) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/6);
-                                    end else if ({addr[5], addr[1]} == 2'b01) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/7);
-                                    end else if ({addr[5], addr[1]} == 2'b11) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/5);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Output Drive Strength = %d", $time, cmd_string[cmd], bank, {addr[5], addr[1]});
-                                    end
-                                    // ODT Rtt (Rtt_NOM)
-                                    odt_rtt_nom = {addr[9], addr[6], addr[2]};
-                                    if (odt_rtt_nom == 3'b000) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d ODT Rtt = Disabled", $time, cmd_string[cmd], bank);
-                                        odt_en = 0;
-                                    end else if ((odt_rtt_nom < 4) || ((!addr[7] || (addr[7] && addr[12])) && (odt_rtt_nom < 6))) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d ODT Rtt = %d Ohm", $time, cmd_string[cmd], bank, get_rtt_nom(odt_rtt_nom));
-                                        odt_en = 1;
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal ODT Rtt = %d", $time, cmd_string[cmd], bank, odt_rtt_nom);
-                                        odt_en = 0;
-                                    end
-                                    // Report the additive latency value
-                                    al = addr[4:3];
-                                    set_latency;
-                                    if (al == 0) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Additive Latency = %d", $time, cmd_string[cmd], bank, al);
-                                    end else if ((al >= AL_MIN) && (al <= AL_MAX)) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Additive Latency = CL - %d", $time, cmd_string[cmd], bank, al);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Additive Latency = %d", $time, cmd_string[cmd], bank, al);
-                                    end
-                                    // Write Levelization
-                                    write_levelization = addr[7];
-                                    if (!write_levelization) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Levelization = Disabled", $time, cmd_string[cmd], bank);
-                                    end else if (write_levelization) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Levelization = Enabled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Write Levelization = %d", $time, cmd_string[cmd], bank, write_levelization);
-                                    end
-                                    // Reserved
-                                    if (addr[8] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                    // Reserved
-                                    if (addr[10] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                    // TDQS Enable
-                                    tdqs_en = addr[11];
-                                    if (!tdqs_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Disabled", $time, cmd_string[cmd], bank);
-                                    end else if (tdqs_en) begin
-                                        if (8 == DQ_BITS) begin
-										    if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Enabled", $time, cmd_string[cmd], bank);
+                                /// cke && cmd==LOAD_MODE && not any active_bank
+                                case (bank)
+                                    // MR0
+                                    0 :
+                                        begin
+                                            // Burst Length
+                                            if (addr[1:0] == 2'b00) begin
+                                                burst_length = 8;   /// 8(Fixed)
+                                                blotf = 0;
+                                                truebl4 = 0;
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = %d", $time, cmd_string[cmd], bank, burst_length);
+                                            end else if (addr[1:0] == 2'b01) begin
+                                                burst_length = 8;   /// BC4 or 8(on the fly)
+                                                blotf = 1;
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = Select via A12", $time, cmd_string[cmd], bank);
+                                            end else if (addr[1:0] == 2'b10) begin
+                                                burst_length = 4;   /// BC4(Fixed)
+                                                blotf = 0;
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Length = Fixed %d (chop)", $time, cmd_string[cmd], bank, burst_length);
+                                            end else begin          /// Reserved
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Burst Length = %d", $time, cmd_string[cmd], bank, addr[1:0]);
+                                            end
+
+                                            // Burst Order
+                                            burst_order = addr[3];
+                                            if (!burst_order) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Order = Sequential", $time, cmd_string[cmd], bank);
+                                            end else if (burst_order) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Burst Order = Interleaved", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Burst Order = %d", $time, cmd_string[cmd], bank, burst_order);
+                                            end
+
+                                            // CAS Latency
+                                            cas_latency = {addr[2], addr[6:4]} + 4;
+                                            set_latency;    /// task set WL/RL, set al and dll_en first
+                                            if ((cas_latency >= CL_MIN) && (cas_latency <= CL_MAX)) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d CAS Latency = %d", $time, cmd_string[cmd], bank, cas_latency);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal CAS Latency = %d", $time, cmd_string[cmd], bank, cas_latency);
+                                            end
+
+                                            // Reserved (TM)
+                                            if (addr[7] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+
+                                            // DLL Reset
+                                            dll_reset = addr[8];
+                                            if (!dll_reset) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Reset = Normal", $time, cmd_string[cmd], bank);
+                                            end else if (dll_reset) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Reset = Reset DLL", $time, cmd_string[cmd], bank);
+                                                dll_locked = 0;
+                                                init_dll_reset = 1;
+                                                ck_dll_reset <= ck_cntr;
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal DLL Reset = %d", $time, cmd_string[cmd], bank, dll_reset);
+                                            end
+
+			    		    		        // Write Recovery
+			    		    		        if (addr[11:9] == 0) begin
+			    		    		 	      write_recovery  = 16;
+                                            end else if (addr[11:9] < 4) begin
+			    		    		 	      write_recovery  = addr[11:9] + 4;
+                                            end else begin
+			    		    		 	      write_recovery  = 2*addr[11:9];
+                                            end
+
+                                            if ((write_recovery >= WR_MIN) && (write_recovery <= WR_MAX)) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Recovery = %d", $time, cmd_string[cmd], bank, write_recovery);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Write Recovery = %d", $time, cmd_string[cmd], bank, write_recovery);
+                                            end
+
+                                            // Power Down Mode
+                                            low_power = !addr[12];
+                                            if (!low_power) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Power Down Mode = DLL on", $time, cmd_string[cmd], bank);
+                                            end else if (low_power) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Power Down Mode = DLL off", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Power Down Mode = %d", $time, cmd_string[cmd], bank, low_power);
+                                            end
+
+                                            // Reserved
+                                            if (ADDR_BITS>13 && addr[13] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
                                         end
-									    else begin
-                                            $display ("%m: at time %t WARNING: %s %d Illegal TDQS Enable.  TDQS only exists on a x8 part", $time, cmd_string[cmd], bank);
-                                            tdqs_en = 0;
-										end
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal TDQS Enable = %d", $time, cmd_string[cmd], bank, tdqs_en);
-                                    end
-                                    // Output Enable
-                                    out_en = !addr[12];
-                                    if (!out_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Qoff = Disabled", $time, cmd_string[cmd], bank);
-                                    end else if (out_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Qoff = Enabled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Qoff = %d", $time, cmd_string[cmd], bank, out_en);
-                                    end
-                                    // Reserved
-                                    if (ADDR_BITS>13 && addr[13] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                end
-                                2 : begin
-								    if (feature_pasr) begin
-                                        // Partial Array Self Refresh
-                                        pasr = addr[2:0];
-                                        case (pasr)
-                                            3'b000 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-7", $time, cmd_string[cmd], bank);
-                                            3'b001 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-3", $time, cmd_string[cmd], bank);
-                                            3'b010 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-1", $time, cmd_string[cmd], bank);
-                                            3'b011 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0", $time, cmd_string[cmd], bank);
-                                            3'b100 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 2-7", $time, cmd_string[cmd], bank);
-                                            3'b101 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 4-7", $time, cmd_string[cmd], bank);
-                                            3'b110 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 6-7", $time, cmd_string[cmd], bank);
-                                            3'b111 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 7", $time, cmd_string[cmd], bank);
-                                            default : $display ("%m: at time %t ERROR: %s %d Illegal Partial Array Self Refresh = %d", $time, cmd_string[cmd], bank, pasr);
-                                        endcase
-									end
-								    else
-                                    if (addr[2:0] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                    // CAS Write Latency
-                                    cas_write_latency = addr[5:3]+5;
-                                    set_latency;
-                                    if ((cas_write_latency >= CWL_MIN) && (cas_write_latency <= CWL_MAX)) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d CAS Write Latency = %d", $time, cmd_string[cmd], bank, cas_write_latency);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal CAS Write Latency = %d", $time, cmd_string[cmd], bank, cas_write_latency);
-                                    end
-                                    // Auto Self Refresh Method
-                                    asr = addr[6];
-                                    if (!asr) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Auto Self Refresh = Disabled", $time, cmd_string[cmd], bank);
-                                    end else if (asr) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Auto Self Refresh = Enabled", $time, cmd_string[cmd], bank);
-                                        if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Auto Self Refresh is not modeled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Auto Self Refresh = %d", $time, cmd_string[cmd], bank, asr);
-                                    end
-                                    // Self Refresh Temperature
-                                    srt = addr[7];
-                                    if (!srt) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Self Refresh Temperature = Normal", $time, cmd_string[cmd], bank);
-                                    end else if (srt) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Self Refresh Temperature = Extended", $time, cmd_string[cmd], bank);
-                                        if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Self Refresh Temperature is not modeled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Self Refresh Temperature = %d", $time, cmd_string[cmd], bank, srt);
-                                    end
-                                    if (asr && srt)
-                                        $display ("%m: at time %t ERROR: %s %d SRT must be set to 0 when ASR is enabled.", $time, cmd_string[cmd], bank);
-                                    // Reserved
-                                    if (addr[8] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                    // Dynamic ODT (Rtt_WR)
-                                    odt_rtt_wr = addr[10:9];
-                                    if (odt_rtt_wr == 2'b00) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Dynamic ODT = Disabled", $time, cmd_string[cmd], bank);
-                                        dyn_odt_en = 0;
-                                    end else if ((odt_rtt_wr > 0) && (odt_rtt_wr < 3)) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d Dynamic ODT Rtt = %d Ohm", $time, cmd_string[cmd], bank, get_rtt_wr(odt_rtt_wr));
-                                        dyn_odt_en = 1;
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal Dynamic ODT = %d", $time, cmd_string[cmd], bank, odt_rtt_wr);
-                                        dyn_odt_en = 0;
-                                    end
-                                    // Reserved
-                                    if (ADDR_BITS>13 && addr[13:11] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                end
-                                3 : begin
-                                    mpr_select = addr[1:0];
-                                    // MultiPurpose Register Select
-                                    if (mpr_select == 2'b00) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Select = Pre-defined pattern", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        if (check_strict_mrbits) $display ("%m: at time %t ERROR: %s %d Illegal MultiPurpose Register Select = %d", $time, cmd_string[cmd], bank, mpr_select);
-                                    end
-                                    // MultiPurpose Register Enable
-                                    mpr_en = addr[2];
-                                    if (!mpr_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Enable = Disabled", $time, cmd_string[cmd], bank);
-                                    end else if (mpr_en) begin
-                                        if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Enable = Enabled", $time, cmd_string[cmd], bank);
-                                    end else begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal MultiPurpose Register Enable = %d", $time, cmd_string[cmd], bank, mpr_en);
-                                    end
+                                    // MR1
+                                    1 :
+                                        begin
+                                            // DLL Enable
+                                            dll_en = !addr[0];
+                                            if (!dll_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Enable = Disabled", $time, cmd_string[cmd], bank);
+                                                if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d DLL off mode is not fully modeled", $time, cmd_string[cmd], bank);
+                                            end else if (dll_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d DLL Enable = Enabled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal DLL Enable = %d", $time, cmd_string[cmd], bank, dll_en);
+                                            end
 
-                                    if (feature_truebl4 && (addr[11] == 1'b1)) begin
-                                     if (addr[11] == 1'b1) begin
-                                        truebl4 = 1;
-                                        $display(" EMRS3 Set True Bl4 mode only ");
-                                     end
-                                    end
+                                            // Output Drive Strength
+                                            if ({addr[5], addr[1]} == 2'b00) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/6);
+                                            end else if ({addr[5], addr[1]} == 2'b01)begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/7);
+                                            end else if ({addr[5], addr[1]} == 2'b11)begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Output Drive Strength = %d Ohm", $time, cmd_string[cmd], bank, RZQ/5);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Output Drive Strength = %d", $time, cmd_string[cmd], bank, {addr[5], addr[1]});
+                                            end
 
-                                    // Reserved
-                                    if (ADDR_BITS>13 && addr[13:3] !== 0 && check_strict_mrbits) begin
-                                        $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
-                                    end
-                                end
-                            endcase
-                            if (dyn_odt_en && write_levelization)
-                                $display ("%m: at time %t ERROR: Dynamic ODT is not available during Write Leveling mode.", $time);
-                            init_mode_reg[bank] = 1;
-                            mode_reg[bank] = addr;
-			    // dll_reset bit self clear
-			    if(bank==0 && addr[8]==1'b1)
-			      mode_reg[0][8] <= #($rtoi(tck_avg)) 1'b0;
-                            tm_load_mode <= $time;
-                            ck_load_mode <= ck_cntr;
+                                            // ODT Rtt (Rtt_NOM)
+                                            odt_rtt_nom = {addr[9], addr[6], addr[2]};
+                                            if (odt_rtt_nom == 3'b000) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d ODT Rtt = Disabled", $time, cmd_string[cmd], bank);
+                                                odt_en = 0;
+                                            end else if ((odt_rtt_nom < 4) || ((!addr[7] || (addr[7] && addr[12])) && (odt_rtt_nom < 6))) begin /// 7:Write leveling enable, 12:Qoff
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d ODT Rtt = %d Ohm", $time, cmd_string[cmd], bank, get_rtt_nom(odt_rtt_nom));
+                                                odt_en = 1;
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal ODT Rtt = %d", $time, cmd_string[cmd], bank, odt_rtt_nom);
+                                                odt_en = 0;
+                                            end
+
+                                            // Report the additive latency value
+                                            al = addr[4:3];
+                                            set_latency;    /// task set WL/RL, set al and dll_en first
+                                            if (al == 0) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Additive Latency = %d", $time, cmd_string[cmd], bank, al);
+                                            end else if ((al >= AL_MIN) && (al <= AL_MAX)) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Additive Latency = CL - %d", $time, cmd_string[cmd], bank, al);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Additive Latency = %d", $time, cmd_string[cmd], bank, al);
+                                            end
+
+                                            // Write Levelization
+                                            write_levelization = addr[7];
+                                            if (!write_levelization) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Levelization = Disabled", $time, cmd_string[cmd], bank);
+                                            end else if (write_levelization) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Write Levelization = Enabled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Write Levelization = %d", $time, cmd_string[cmd], bank, write_levelization);
+                                            end
+
+                                            // Reserved
+                                            if (addr[8] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+
+                                            // Reserved
+                                            if (addr[10] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+
+                                            // TDQS Enable
+                                            tdqs_en = addr[11];
+                                            if (!tdqs_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Disabled", $time, cmd_string[cmd], bank);
+                                            end else if (tdqs_en) begin
+                                                if (8 == DQ_BITS) begin
+			    		    			            if (DEBUG) $display ("%m: at time %t INFO: %s %d TDQS Enable = Enabled", $time, cmd_string[cmd], bank);
+			    		    			        end else begin
+                                                    $display ("%m: at time %t WARNING: %s %d Illegal TDQS Enable.  TDQS only exists on a x8 part", $time, cmd_string[cmd], bank);
+                                                    tdqs_en = 0;
+			    		    			        end
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal TDQS Enable = %d", $time, cmd_string[cmd], bank, tdqs_en);
+                                            end
+
+                                            // Output Enable
+                                            out_en = !addr[12];
+                                            if (!out_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Qoff = Disabled", $time, cmd_string[cmd], bank);
+                                            end else if (out_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Qoff = Enabled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Qoff = %d", $time, cmd_string[cmd], bank, out_en);
+                                            end
+
+                                            // Reserved
+                                            if (ADDR_BITS>13 && addr[13] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+                                        end
+                                    // MR2
+                                    2 :
+                                        begin
+			    		    		        if (feature_pasr) begin
+                                                // Partial Array Self Refresh
+                                                pasr = addr[2:0];
+                                                case (pasr)
+                                                    3'b000 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-7", $time, cmd_string[cmd], bank);
+                                                    3'b001 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-3", $time, cmd_string[cmd], bank);
+                                                    3'b010 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0-1", $time, cmd_string[cmd], bank);
+                                                    3'b011 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 0", $time, cmd_string[cmd], bank);
+                                                    3'b100 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 2-7", $time, cmd_string[cmd], bank);
+                                                    3'b101 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 4-7", $time, cmd_string[cmd], bank);
+                                                    3'b110 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 6-7", $time, cmd_string[cmd], bank);
+                                                    3'b111 : if (DEBUG) $display ("%m: at time %t INFO: %s %d Partial Array Self Refresh = Bank 7", $time, cmd_string[cmd], bank);
+                                                    default : $display ("%m: at time %t ERROR: %s %d Illegal Partial Array Self Refresh = %d", $time, cmd_string[cmd], bank, pasr);
+                                                endcase
+			    		    			    end else if (addr[2:0] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+
+                                            // CAS Write Latency
+                                            cas_write_latency = addr[5:3]+5;
+                                            set_latency;
+                                            if ((cas_write_latency >= CWL_MIN) && (cas_write_latency <= CWL_MAX)) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d CAS Write Latency = %d", $time, cmd_string[cmd], bank, cas_write_latency);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal CAS Write Latency = %d", $time, cmd_string[cmd], bank, cas_write_latency);
+                                            end
+                                            // Auto Self Refresh Method
+                                            asr = addr[6];
+                                            if (!asr) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Auto Self Refresh = Disabled", $time, cmd_string[cmd], bank);
+                                            end else if (asr) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Auto Self Refresh = Enabled", $time, cmd_string[cmd], bank);
+                                                if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Auto Self Refresh is not modeled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Auto Self Refresh = %d", $time, cmd_string[cmd], bank, asr);
+                                            end
+                                            // Self Refresh Temperature
+                                            srt = addr[7];
+                                            if (!srt) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Self Refresh Temperature = Normal", $time, cmd_string[cmd], bank);
+                                            end else if (srt) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Self Refresh Temperature = Extended", $time, cmd_string[cmd], bank);
+                                                if (check_strict_mrbits) $display ("%m: at time %t WARNING: %s %d Self Refresh Temperature is not modeled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Self Refresh Temperature = %d", $time, cmd_string[cmd], bank, srt);
+                                            end
+                                            if (asr && srt)
+                                                $display ("%m: at time %t ERROR: %s %d SRT must be set to 0 when ASR is enabled.", $time, cmd_string[cmd], bank);
+
+                                            // Reserved
+                                            if (addr[8] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+                                            // Dynamic ODT (Rtt_WR)
+                                            odt_rtt_wr = addr[10:9];
+                                            if (odt_rtt_wr == 2'b00) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Dynamic ODT = Disabled", $time, cmd_string[cmd], bank);
+                                                dyn_odt_en = 0;
+                                            end else if ((odt_rtt_wr > 0) && (odt_rtt_wr < 3)) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d Dynamic ODT Rtt = %d Ohm", $time, cmd_string[cmd], bank, get_rtt_wr(odt_rtt_wr));
+                                                dyn_odt_en = 1;
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal Dynamic ODT = %d", $time, cmd_string[cmd], bank, odt_rtt_wr);
+                                                dyn_odt_en = 0;
+                                            end
+
+                                            // Reserved
+                                            if (ADDR_BITS>13 && addr[13:11] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+                                        end
+                                    // MR3
+                                    3 :
+                                        begin
+                                            mpr_select = addr[1:0];
+                                            // MultiPurpose Register Select
+                                            if (mpr_select == 2'b00) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Select = Pre-defined pattern", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                if (check_strict_mrbits) $display ("%m: at time %t ERROR: %s %d Illegal MultiPurpose Register Select = %d", $time, cmd_string[cmd], bank, mpr_select);
+                                            end
+                                            // MultiPurpose Register Enable
+                                            mpr_en = addr[2];
+                                            if (!mpr_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Enable = Disabled", $time, cmd_string[cmd], bank);
+                                            end else if (mpr_en) begin
+                                                if (DEBUG) $display ("%m: at time %t INFO: %s %d MultiPurpose Register Enable = Enabled", $time, cmd_string[cmd], bank);
+                                            end else begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal MultiPurpose Register Enable = %d", $time, cmd_string[cmd], bank, mpr_en);
+                                            end
+                                            if (feature_truebl4 && (addr[11] == 1'b1)) begin
+                                                if (addr[11] == 1'b1) begin
+                                                    truebl4 = 1;
+                                                    $display(" EMRS3 Set True Bl4 mode only ");
+                                                end
+                                            end
+
+                                            // Reserved
+                                            if (ADDR_BITS>13 && addr[13:3] !== 0 && check_strict_mrbits) begin
+                                                $display ("%m: at time %t ERROR: %s %d Illegal value.  Reserved address bits must be programmed to zero", $time, cmd_string[cmd], bank);
+                                            end
+                                        end
+                                endcase
+
+                                if (dyn_odt_en && write_levelization)
+                                    $display ("%m: at time %t ERROR: Dynamic ODT is not available during Write Leveling mode.", $time);
+                                init_mode_reg[bank] = 1;
+                                mode_reg[bank] = addr;
+			                    // dll_reset bit self clear
+			                    if(bank==0 && addr[8]==1'b1)
+			                        mode_reg[0][8] <= #($rtoi(tck_avg)) 1'b0;
+                                tm_load_mode <= $time;
+                                ck_load_mode <= ck_cntr;
+                            end
                         end
-                    end
-                    REFRESH : begin
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (|active_bank) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (DEBUG) $display ("%m: at time %t INFO: %s", $time, cmd_string[cmd]);
-                            er_trfc_max = 0;
-                            ref_cntr = ref_cntr + 1;
-                            tm_refresh <= $time;
-                            ck_refresh <= ck_cntr;
-                        end
-                    end
-                    PRECHARGE : begin
-                        if (addr[AP]) begin
-                            if (DEBUG) $display ("%m: at time %t INFO: %s All", $time, cmd_string[cmd]);
-                        end
-                        // PRECHARGE command will be treated as a NOP if there is no open row in that bank (idle state),
-                        // or if the previously open row is already in the process of precharging
-                        if (|active_bank) begin
-                            if (($time - tm_txpr < TXPR) || (ck_cntr - ck_txpr < TXPR_TCK))
-                                $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[cmd]);
+                    //
+                    REFRESH :
+                        begin
                             if (mpr_en) begin
                                 $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
                                 if (STOP_ON_ERROR) $stop(0);
+                            end else if (|active_bank) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
                             end else begin
-                                for (i=0; i<`BANKS; i=i+1) begin
-                                    if (active_bank[i]) begin
-                                        if (addr[AP] || (i == bank)) begin
+                                if (DEBUG) $display ("%m: at time %t INFO: %s", $time, cmd_string[cmd]);
+                                er_trfc_max = 0;
+                                ref_cntr = ref_cntr + 1;
+                                tm_refresh <= $time;
+                                ck_refresh <= ck_cntr;
+                            end
+                        end
+                    //
+                    PRECHARGE :
+                        begin
+                            if (addr[AP]) begin
+                                if (DEBUG) $display ("%m: at time %t INFO: %s All", $time, cmd_string[cmd]);
+                            end
+                            // PRECHARGE command will be treated as a NOP if there is no open row in that bank (idle state),
+                            // or if the previously open row is already in the process of precharging
+                            if (|active_bank) begin
+                                if (($time - tm_txpr < TXPR) || (ck_cntr - ck_txpr < TXPR_TCK))
+                                    $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[cmd]);
+                                if (mpr_en) begin
+                                    $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
+                                    if (STOP_ON_ERROR) $stop(0);
+                                end else begin
+                                    for (i=0; i<`BANKS; i=i+1) begin
+                                        if (active_bank[i]) begin
+                                            if (addr[AP] || (i == bank)) begin
+                                                for (j=0; j<=SELF_REF; j=j+1) begin
+                                                    chk_err(SAME_BANK, i, j, cmd);
+                                                    chk_err(DIFF_BANK, i, j, cmd);
+                                                end
 
-                                            for (j=0; j<=SELF_REF; j=j+1) begin
-                                                chk_err(SAME_BANK, i, j, cmd);
-                                                chk_err(DIFF_BANK, i, j, cmd);
-                                            end
-
-                                            if (auto_precharge_bank[i]) begin
-                                                $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], i);
-                                                if (STOP_ON_ERROR) $stop(0);
-                                            end else begin
-                                                if (DEBUG) $display ("%m: at time %t INFO: %s bank %d", $time, cmd_string[cmd], i);
-                                                active_bank[i] = 1'b0;
-                                                tm_bank_precharge[i] <= $time;
-                                                tm_precharge <= $time;
-                                                ck_precharge <= ck_cntr;
+                                                if (auto_precharge_bank[i]) begin
+                                                    $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], i);
+                                                    if (STOP_ON_ERROR) $stop(0);
+                                                end else begin
+                                                    if (DEBUG) $display ("%m: at time %t INFO: %s bank %d", $time, cmd_string[cmd], i);
+                                                    active_bank[i] = 1'b0;
+                                                    tm_bank_precharge[i] <= $time;
+                                                    tm_precharge <= $time;
+                                                    ck_precharge <= ck_cntr;
+                                                end
                                             end
                                         end
                                     end
                                 end
-                            end
-                        end // if (|active_bank)
-                        else begin
-                            chk_err(DIFF_BANK, 0, REFRESH, PRECHARGE);
-                        end
-                    end
-                    ACTIVATE : begin
-                        tfaw_cntr = 0;
-                        for (i=0; i<`BANKS; i=i+1) begin
-                            if ($time - tm_bank_activate[i] < TFAW) begin
-                                tfaw_cntr = tfaw_cntr + 1;
+                            end // if (|active_bank)
+                            else begin
+                                chk_err(DIFF_BANK, 0, REFRESH, PRECHARGE);
                             end
                         end
-                        if (tfaw_cntr > 3) begin
-                            $display ("%m: at time %t ERROR:  tFAW violation during %s to bank %d", $time, cmd_string[cmd], bank);
-                        end
+                    ///
+                    ACTIVATE :
+                        begin
+                            tfaw_cntr = 0;
+                            for (i=0; i<`BANKS; i=i+1) begin
+                                if ($time - tm_bank_activate[i] < TFAW) begin
+                                    tfaw_cntr = tfaw_cntr + 1;
+                                end
+                            end
+                            if (tfaw_cntr > 3) begin
+                                $display ("%m: at time %t ERROR:  tFAW violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                            end
 
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!init_done) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (active_bank[bank]) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Precharged.", $time, cmd_string[cmd], bank);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (addr >= 1<<ROW_BITS) begin
-                                $display ("%m: at time %t WARNING: row = %h does not exist.  Maximum row = %h", $time, addr, (1<<ROW_BITS)-1);
-                            end
-                            if (DEBUG) $display ("%m: at time %t INFO: %s bank %d row %h", $time, cmd_string[cmd], bank, addr);
-                            active_bank[bank] = 1'b1;
-                            active_row[bank] = addr;
-                            tm_group_activate[bank[1]] <= $time;
-                            tm_activate <= $time;
-                            tm_bank_activate[bank] <= $time;
-                            ck_group_activate[bank[1]] <= ck_cntr;
-                            ck_activate <= ck_cntr;
-                        end
-                    end
-                    WRITE : begin
-                        if ((!rd_bc && blotf) || (burst_length == 4)) begin // BL=4
-                            if (truebl4) begin
-                                if (ck_cntr - ck_group_read[bank[1]] < read_latency + TCCD/2 + 2 - write_latency)
-                                    $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
-                                if (ck_cntr - ck_read < read_latency + TCCD_DG/2 + 2 - write_latency)
-                                    $display ("%m: at time %t ERROR:  tRTW_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                            if (mpr_en) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!init_done) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (active_bank[bank]) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Precharged.", $time, cmd_string[cmd], bank);
+                                if (STOP_ON_ERROR) $stop(0);
                             end else begin
-                                if (ck_cntr - ck_read < read_latency + TCCD/2 + 2 - write_latency)
-                                    $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                                if (addr >= 1<<ROW_BITS) begin
+                                    $display ("%m: at time %t WARNING: row = %h does not exist.  Maximum row = %h", $time, addr, (1<<ROW_BITS)-1);
+                                end
+                                if (DEBUG) $display ("%m: at time %t INFO: %s bank %d row %h", $time, cmd_string[cmd], bank, addr);
+                                active_bank[bank] = 1'b1;
+                                active_row[bank] = addr;
+                                tm_group_activate[bank[1]] <= $time;
+                                tm_activate <= $time;
+                                tm_bank_activate[bank] <= $time;
+                                ck_group_activate[bank[1]] <= ck_cntr;
+                                ck_activate <= ck_cntr;
                             end
-                        end else begin // BL=8
-                            if (ck_cntr - ck_read < read_latency + TCCD + 2 - write_latency)
-                                $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
                         end
-
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!init_done) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!active_bank[bank])  begin
-                            if (check_strict_timing) $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Activated.", $time, cmd_string[cmd], bank);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (auto_precharge_bank[bank]) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], bank);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if ((ck_cntr - ck_write < burst_length/2) && (truebl4 == 0)) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Illegal burst interruption.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (addr[AP]) begin
-                                auto_precharge_bank[bank] = 1'b1;
-                                write_precharge_bank[bank] = 1'b1;
-                            end
-`ifdef CA14PLUS
-                            col = {addr[COL_BITS-1:BC+1], addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
-`else
-                            col = {addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
-`endif
-                            if (col >= 1<<COL_BITS) begin
-                                $display ("%m: at time %t WARNING: col = %h does not exist.  Maximum col = %h", $time, col, (1<<COL_BITS)-1);
-                            end
-                            if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
-                                col = col & -4;
-                            end else begin // BL=8
-                                col = col & -8;
-                            end
-                            if (DEBUG) $display ("%m: at time %t INFO: %s bank %d col %h, auto precharge %d", $time, cmd_string[cmd], bank, col, addr[AP]);
-                            wr_pipeline[2*write_latency + 1]  = 1;
-                            ba_pipeline[2*write_latency + 1]  = bank;
-                            row_pipeline[2*write_latency + 1] = active_row[bank];
-                            col_pipeline[2*write_latency + 1] = col;
-                            if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
-                                bl_pipeline[2*write_latency + 1] = 4;
-                                if (mpr_en && col%4) begin
-                                    $display ("%m: at time %t WARNING: col[1:0] must be set to 2'b00 during a BL4 Multipurpose Register read", $time);
-                                end
-                            end else begin // BL=8
-                                bl_pipeline[2*write_latency + 1] = 8;
-                                if (odt_in) begin
-                                    ck_odth8 <= ck_cntr;
-                                end
-                            end
-                            for (j=0; j<(bl_pipeline[2*write_latency + 1] + 4); j=j+1) begin
-                                dyn_odt_pipeline[2*(write_latency - 2) + j] = 1'b1; // ODTLcnw = WL - 2, ODTLcwn = BL/2 + 2
-                            end
-                            ck_bank_write[bank] <= ck_cntr;
-                            ck_group_write[bank[1]] <= ck_cntr;
-                            ck_write <= ck_cntr;
-                        end
-                    end
-                    READ : begin
-                        if (!dll_locked)
-                            $display ("%m: at time %t WARNING: tDLLK violation during %s.", $time, cmd_string[cmd]);
-                        if (mpr_en && (addr[1:0] != 2'b00)) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  addr[1:0] must be zero during Multipurpose Register Read.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!init_done) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!active_bank[bank] && !mpr_en) begin
-                            if (check_strict_timing) $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Activated.", $time, cmd_string[cmd], bank);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (auto_precharge_bank[bank]) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], bank);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if ((ck_cntr - ck_read < burst_length/2) && (truebl4 == 0)) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Illegal burst interruption.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (addr[AP] && !mpr_en) begin
-                                auto_precharge_bank[bank] = 1'b1;
-                                read_precharge_bank[bank] = 1'b1;
-                            end
-`ifdef CA14PLUS
-                            col = {addr[COL_BITS-1:BC+1], addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
-`else
-                            col = {addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
-`endif
-                            if (col >= 1<<COL_BITS) begin
-                                $display ("%m: at time %t WARNING: col = %h does not exist.  Maximum col = %h", $time, col, (1<<COL_BITS)-1);
-                            end
-                            if (DEBUG) $display ("%m: at time %t INFO: %s bank %d col %h, auto precharge %d", $time, cmd_string[cmd], bank, col, addr[AP]);
-                            rd_pipeline[2*read_latency - 1]  = 1;
-                            ba_pipeline[2*read_latency - 1]  = bank;
-                            row_pipeline[2*read_latency - 1] = active_row[bank];
-                            col_pipeline[2*read_latency - 1] = col;
-                            if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
-                                bl_pipeline[2*read_latency - 1] = 4;
-                                if (mpr_en && col%4) begin
-                                    $display ("%m: at time %t WARNING: col[1:0] must be set to 2'b00 during a BL4 Multipurpose Register read", $time);
-                                end
-                            end else begin // BL=8
-                                bl_pipeline[2*read_latency - 1] = 8;
-                                if (mpr_en && col%8) begin
-                                    $display ("%m: at time %t WARNING: col[2:0] must be set to 3'b000 during a BL8 Multipurpose Register read", $time);
-                                end
-                            end
-                            rd_bc = addr[BC];
-                            ck_bank_read[bank] <= ck_cntr;
-                            ck_group_read[bank[1]] <= ck_cntr;
-                            ck_read <= ck_cntr;
-                        end
-                    end
-                    ZQ : begin
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (|active_bank) begin
-                            $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (DEBUG) $display ("%m: at time %t INFO: %s long = %d", $time, cmd_string[cmd], addr[AP]);
-                            if (addr[AP]) begin
-                                zq_set = 1;
-                                if (init_done) begin
-                                    ck_zqoper <= ck_cntr;
+                    ///
+                    WRITE :
+                        begin
+                            if ((!rd_bc && blotf) || (burst_length == 4)) begin // BL=4
+                                if (truebl4) begin
+                                    if (ck_cntr - ck_group_read[bank[1]] < read_latency + TCCD/2 + 2 - write_latency)
+                                        $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                                    if (ck_cntr - ck_read < read_latency + TCCD_DG/2 + 2 - write_latency)
+                                        $display ("%m: at time %t ERROR:  tRTW_DG violation during %s to bank %d", $time, cmd_string[cmd], bank);
                                 end else begin
-                                    ck_zqinit <= ck_cntr;
+                                    if (ck_cntr - ck_read < read_latency + TCCD/2 + 2 - write_latency)
+                                        $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
                                 end
+                            end else begin // BL=8
+                                if (ck_cntr - ck_read < read_latency + TCCD + 2 - write_latency)
+                                    $display ("%m: at time %t ERROR:  tRTW violation during %s to bank %d", $time, cmd_string[cmd], bank);
+                            end
+
+                            if (mpr_en) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!init_done) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!active_bank[bank])  begin
+                                if (check_strict_timing) $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Activated.", $time, cmd_string[cmd], bank);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (auto_precharge_bank[bank]) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], bank);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if ((ck_cntr - ck_write < burst_length/2) && (truebl4 == 0)) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Illegal burst interruption.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
                             end else begin
-                                ck_zqcs <= ck_cntr;
+                                if (addr[AP]) begin
+                                    auto_precharge_bank[bank] = 1'b1;
+                                    write_precharge_bank[bank] = 1'b1;
+                                end
+`ifdef CA14PLUS
+                                col = {addr[COL_BITS-1:BC+1], addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
+`else
+                                col = {addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
+`endif
+                                if (col >= 1<<COL_BITS) begin
+                                    $display ("%m: at time %t WARNING: col = %h does not exist.  Maximum col = %h", $time, col, (1<<COL_BITS)-1);
+                                end
+                                if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
+                                    col = col & -4;
+                                end else begin // BL=8
+                                    col = col & -8;
+                                end
+                                if (DEBUG) $display ("%m: at time %t INFO: %s bank %d col %h, auto precharge %d", $time, cmd_string[cmd], bank, col, addr[AP]);
+                                wr_pipeline[2*write_latency + 1]  = 1;
+                                ba_pipeline[2*write_latency + 1]  = bank;
+                                row_pipeline[2*write_latency + 1] = active_row[bank];
+                                col_pipeline[2*write_latency + 1] = col;
+                                if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
+                                    bl_pipeline[2*write_latency + 1] = 4;
+                                    if (mpr_en && col%4) begin
+                                        $display ("%m: at time %t WARNING: col[1:0] must be set to 2'b00 during a BL4 Multipurpose Register read", $time);
+                                    end
+                                end else begin // BL=8
+                                    bl_pipeline[2*write_latency + 1] = 8;
+                                    if (odt_in) begin
+                                        ck_odth8 <= ck_cntr;
+                                    end
+                                end
+                                for (j=0; j<(bl_pipeline[2*write_latency + 1] + 4); j=j+1) begin
+                                    dyn_odt_pipeline[2*(write_latency - 2) + j] = 1'b1; // ODTLcnw = WL - 2, ODTLcwn = BL/2 + 2
+                                end
+                                ck_bank_write[bank] <= ck_cntr;
+                                ck_group_write[bank[1]] <= ck_cntr;
+                                ck_write <= ck_cntr;
                             end
                         end
-                    end
-                    NOP: begin
-                        if (in_power_down) begin
-                            if (($time - tm_freq_change < TCKSRX) || (ck_cntr - ck_freq_change < TCKSRX_TCK))
-                                $display ("%m: at time %t ERROR: tCKSRX violation during Power Down Exit", $time);
-                            if ($time - tm_cke_cmd > TPD_MAX)
-                                $display ("%m: at time %t ERROR: tPD maximum violation during Power Down Exit", $time);
-                            if (DEBUG) $display ("%m: at time %t INFO: Power Down Exit", $time);
-                            in_power_down = 0;
-                            if ((active_bank == 0) && low_power) begin // precharge power down with dll off
-                                if (ck_cntr - ck_odt < write_latency - 1)
-                                    $display ("%m: at time %t WARNING: tANPD violation during Power Down Exit.  Synchronous or asynchronous change in termination resistance is possible.", $time);
-                                tm_slow_exit_pd <= $time;
-                                ck_slow_exit_pd <= ck_cntr;
+                    ///
+                    READ :
+                        begin
+                            if (!dll_locked)
+                                $display ("%m: at time %t WARNING: tDLLK violation during %s.", $time, cmd_string[cmd]);
+
+                            if (mpr_en && (addr[1:0] != 2'b00)) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  addr[1:0] must be zero during Multipurpose Register Read.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!init_done) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Initialization sequence is not complete.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!active_bank[bank] && !mpr_en) begin
+                                if (check_strict_timing) $display ("%m: at time %t ERROR: %s Failure.  Bank %d must be Activated.", $time, cmd_string[cmd], bank);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (auto_precharge_bank[bank]) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Auto Precharge is scheduled to bank %d.", $time, cmd_string[cmd], bank);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if ((ck_cntr - ck_read < burst_length/2) && (truebl4 == 0)) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Illegal burst interruption.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else begin
+                                if (addr[AP] && !mpr_en) begin
+                                    auto_precharge_bank[bank] = 1'b1;
+                                    read_precharge_bank[bank] = 1'b1;
+                                end
+`ifdef CA14PLUS
+                                col = {addr[COL_BITS-1:BC+1], addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
+`else
+                                col = {addr[BC-1:AP+1], addr[AP-1:0]}; // assume BC > AP
+`endif
+                                if (col >= 1<<COL_BITS) begin
+                                    $display ("%m: at time %t WARNING: col = %h does not exist.  Maximum col = %h", $time, col, (1<<COL_BITS)-1);
+                                end
+                                if (DEBUG) $display ("%m: at time %t INFO: %s bank %d col %h, auto precharge %d", $time, cmd_string[cmd], bank, col, addr[AP]);
+                                rd_pipeline[2*read_latency - 1]  = 1;
+                                ba_pipeline[2*read_latency - 1]  = bank;
+                                row_pipeline[2*read_latency - 1] = active_row[bank];
+                                col_pipeline[2*read_latency - 1] = col;
+                                if ((!addr[BC] && blotf) || (burst_length == 4)) begin // BL=4
+                                    bl_pipeline[2*read_latency - 1] = 4;
+                                    if (mpr_en && col%4) begin
+                                        $display ("%m: at time %t WARNING: col[1:0] must be set to 2'b00 during a BL4 Multipurpose Register read", $time);
+                                    end
+                                end else begin // BL=8
+                                    bl_pipeline[2*read_latency - 1] = 8;
+                                    if (mpr_en && col%8) begin
+                                        $display ("%m: at time %t WARNING: col[2:0] must be set to 3'b000 during a BL8 Multipurpose Register read", $time);
+                                    end
+                                end
+                                rd_bc = addr[BC];
+                                ck_bank_read[bank] <= ck_cntr;
+                                ck_group_read[bank[1]] <= ck_cntr;
+                                ck_read <= ck_cntr;
                             end
-                            tm_power_down <= $time;
-                            ck_power_down <= ck_cntr;
                         end
-                        if (in_self_refresh) begin
-                            if (($time - tm_freq_change < TCKSRX) || (ck_cntr - ck_freq_change < TCKSRX_TCK))
-                                $display ("%m: at time %t ERROR: tCKSRX violation during Self Refresh Exit", $time);
-                            if (ck_cntr - ck_cke_cmd < TCKESR_TCK)
-                                $display ("%m: at time %t ERROR: tCKESR violation during Self Refresh Exit", $time);
-                            if ($time - tm_cke < TISXR)
-                                $display ("%m: at time %t ERROR: tISXR violation during Self Refresh Exit", $time);
-                            if (DEBUG) $display ("%m: at time %t INFO: Self Refresh Exit", $time);
-                            in_self_refresh = 0;
-                            ck_dll_reset <= ck_cntr;
-                            ck_self_refresh <= ck_cntr;
-                            tm_self_refresh <= $time;
-                            tm_refresh <= $time;
+                    ///
+                    ZQ :
+                        begin
+                            if (mpr_en) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  Multipurpose Register must be disabled.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (|active_bank) begin
+                                $display ("%m: at time %t ERROR: %s Failure.  All banks must be Precharged.", $time, cmd_string[cmd]);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else begin
+                                if (DEBUG) $display ("%m: at time %t INFO: %s long = %d", $time, cmd_string[cmd], addr[AP]);
+                                if (addr[AP]) begin
+                                    zq_set = 1;
+                                    if (init_done) begin
+                                        ck_zqoper <= ck_cntr;
+                                    end else begin
+                                        ck_zqinit <= ck_cntr;
+                                    end
+                                end else begin
+                                    ck_zqcs <= ck_cntr;
+                                end
+                            end
                         end
-                    end
+                    ///
+                    NOP:
+                        begin
+                            if (in_power_down) begin
+                                if (($time - tm_freq_change < TCKSRX) || (ck_cntr - ck_freq_change < TCKSRX_TCK))
+                                    $display ("%m: at time %t ERROR: tCKSRX violation during Power Down Exit", $time);
+                                if ($time - tm_cke_cmd > TPD_MAX)
+                                    $display ("%m: at time %t ERROR: tPD maximum violation during Power Down Exit", $time);
+                                if (DEBUG) $display ("%m: at time %t INFO: Power Down Exit", $time);
+                                in_power_down = 0;
+                                if ((active_bank == 0) && low_power) begin // precharge power down with dll off
+                                    if (ck_cntr - ck_odt < write_latency - 1)
+                                        $display ("%m: at time %t WARNING: tANPD violation during Power Down Exit.  Synchronous or asynchronous change in termination resistance is possible.", $time);
+                                    tm_slow_exit_pd <= $time;
+                                    ck_slow_exit_pd <= ck_cntr;
+                                end
+                                tm_power_down <= $time;
+                                ck_power_down <= ck_cntr;
+                            end
+
+                            if (in_self_refresh) begin
+                                if (($time - tm_freq_change < TCKSRX) || (ck_cntr - ck_freq_change < TCKSRX_TCK))
+                                    $display ("%m: at time %t ERROR: tCKSRX violation during Self Refresh Exit", $time);
+                                if (ck_cntr - ck_cke_cmd < TCKESR_TCK)
+                                    $display ("%m: at time %t ERROR: tCKESR violation during Self Refresh Exit", $time);
+                                if ($time - tm_cke < TISXR)
+                                    $display ("%m: at time %t ERROR: tISXR violation during Self Refresh Exit", $time);
+                                if (DEBUG) $display ("%m: at time %t INFO: Self Refresh Exit", $time);
+                                in_self_refresh = 0;
+                                ck_dll_reset <= ck_cntr;
+                                ck_self_refresh <= ck_cntr;
+                                tm_self_refresh <= $time;
+                                tm_refresh <= $time;
+                            end
+                        end
                 endcase
+
                 if ((prev_cke !== 1) && (cmd !== NOP)) begin
                     $display ("%m: at time %t ERROR: NOP or Deselect is required when CKE goes active.", $time);
                 end
 
                 if (!init_done) begin
                     case (init_step)
-                        0 : begin
-                            if ($time - tm_rst_n < 500000000 && check_strict_timing) 
-                                $display ("%m at time %t WARNING: 500 us is required after RST_N goes inactive before CKE goes active.", $time);
-                            tm_txpr <= $time;
-                            ck_txpr <= ck_cntr;
-                            init_step = init_step + 1;
-                        end
-                        1 : begin 
-                           if (dll_en) init_step = init_step + 1;
-                        end
-                        2 : begin
-                            if (&init_mode_reg && init_dll_reset && zq_set) begin
-                                if (DEBUG) $display ("%m: at time %t INFO: Initialization Sequence is complete", $time);
-                                init_done = 1;
+                        //
+                        0 :
+                            begin
+                                if ($time - tm_rst_n < 500000000 && check_strict_timing)
+                                    $display ("%m at time %t WARNING: 500 us is required after RST_N goes inactive before CKE goes active.", $time);
+                                tm_txpr <= $time;
+                                ck_txpr <= ck_cntr;
+                                init_step = init_step + 1;
                             end
-                        end
+                        //
+                        1 :
+                            begin
+                                if (dll_en) init_step = init_step + 1;
+                            end
+                        //
+                        2 :
+                            begin
+                                if (&init_mode_reg && init_dll_reset && zq_set) begin
+                                    if (DEBUG) $display ("%m: at time %t INFO: Initialization Sequence is complete", $time);
+                                    init_done = 1;
+                                end
+                            end
                     endcase
                 end
-            end else if (prev_cke) begin
+            end
+            else if (prev_cke) begin
                 if ((!init_done) && (init_step > 1)) begin
                     $display ("%m: at time %t ERROR: CKE must remain active until the initialization sequence is complete.", $time);
                     if (STOP_ON_ERROR) $stop(0);
                 end
+
                 case (cmd)
-                    REFRESH : begin
-                        if ($time - tm_txpr < TXPR)
-                            $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[SELF_REF]);
-                        for (j=0; j<=SELF_REF; j=j+1) begin
-                            chk_err(DIFF_BANK, bank, j, SELF_REF);
-                        end
-
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: Self Refresh Failure.  Multipurpose Register must be disabled.", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (|active_bank) begin
-                            $display ("%m: at time %t ERROR: Self Refresh Failure.  All banks must be Precharged.", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (odt_state) begin
-                            $display ("%m: at time %t ERROR: Self Refresh Failure.  ODT must be off prior to entering Self Refresh", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!init_done) begin
-                            $display ("%m: at time %t ERROR: Self Refresh Failure.  Initialization sequence is not complete.", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (DEBUG) $display ("%m: at time %t INFO: Self Refresh Enter", $time);
-						    if (feature_pasr)
-                                // Partial Array Self Refresh
-                                case (pasr)
-                                    3'b000 : ;//keep Bank 0-7
-                                    3'b001 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 4-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hF0); end
-                                    3'b010 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 2-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hFC); end
-                                    3'b011 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 1-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hFE); end
-                                    3'b100 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-1 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h03); end
-                                    3'b101 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-3 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h0F); end
-                                    3'b110 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-5 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h3F); end
-                                    3'b111 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-6 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h7F); end
-							    endcase
-                            in_self_refresh = 1;
-                            dll_locked = 0;
-                        end
-                    end
-                    NOP : begin
-                        // entering precharge power down with dll off and tANPD has not been satisfied
-                        if (low_power && (active_bank == 0) && |odt_pipeline)
-                            $display ("%m: at time %t WARNING: tANPD violation during %s.   Synchronous or asynchronous change in termination resistance is possible.", $time, cmd_string[PWR_DOWN]);
-                        if ($time - tm_txpr < TXPR)
-                            $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[PWR_DOWN]);
-                        for (j=0; j<=SELF_REF; j=j+1) begin
-                            chk_err(DIFF_BANK, bank, j, PWR_DOWN);
-                        end
-
-                        if (mpr_en) begin
-                            $display ("%m: at time %t ERROR: Power Down Failure.  Multipurpose Register must be disabled.", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else if (!init_done) begin
-                            $display ("%m: at time %t ERROR: Power Down Failure.  Initialization sequence is not complete.", $time);
-                            if (STOP_ON_ERROR) $stop(0);
-                        end else begin
-                            if (DEBUG) begin
-                                if (|active_bank) begin
-                                    $display ("%m: at time %t INFO: Active Power Down Enter", $time);
-                                end else begin
-                                    $display ("%m: at time %t INFO: Precharge Power Down Enter", $time);
-                                end
+                    REFRESH :
+                        begin
+                            if ($time - tm_txpr < TXPR)
+                                $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[SELF_REF]);
+                            for (j=0; j<=SELF_REF; j=j+1) begin
+                                chk_err(DIFF_BANK, bank, j, SELF_REF);
                             end
-                            in_power_down = 1;
+
+                            if (mpr_en) begin
+                                $display ("%m: at time %t ERROR: Self Refresh Failure.  Multipurpose Register must be disabled.", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (|active_bank) begin
+                                $display ("%m: at time %t ERROR: Self Refresh Failure.  All banks must be Precharged.", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (odt_state) begin
+                                $display ("%m: at time %t ERROR: Self Refresh Failure.  ODT must be off prior to entering Self Refresh", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!init_done) begin
+                                $display ("%m: at time %t ERROR: Self Refresh Failure.  Initialization sequence is not complete.", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else begin
+                                if (DEBUG) $display ("%m: at time %t INFO: Self Refresh Enter", $time);
+			    		        if (feature_pasr)
+                                    // Partial Array Self Refresh
+                                    case (pasr)
+                                        3'b000 : ;//keep Bank 0-7
+                                        3'b001 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 4-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hF0); end
+                                        3'b010 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 2-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hFC); end
+                                        3'b011 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 1-7 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'hFE); end
+                                        3'b100 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-1 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h03); end
+                                        3'b101 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-3 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h0F); end
+                                        3'b110 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-5 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h3F); end
+                                        3'b111 : begin if (DEBUG) $display("%m: at time %t INFO: Banks 0-6 will be lost due to Partial Array Self Refresh", $time); erase_banks(8'h7F); end
+			    		            endcase
+                                in_self_refresh = 1;
+                                dll_locked = 0;
+                            end
                         end
-                    end
+                    //
+                    NOP :
+                        begin
+                            // entering precharge power down with dll off and tANPD has not been satisfied
+                            if (low_power && (active_bank == 0) && |odt_pipeline)
+                                $display ("%m: at time %t WARNING: tANPD violation during %s.   Synchronous or asynchronous change in termination resistance is possible.", $time, cmd_string[PWR_DOWN]);
+                            if ($time - tm_txpr < TXPR)
+                                $display ("%m: at time %t ERROR:  tXPR violation during %s", $time, cmd_string[PWR_DOWN]);
+                            for (j=0; j<=SELF_REF; j=j+1) begin
+                                chk_err(DIFF_BANK, bank, j, PWR_DOWN);
+                            end
+
+                            if (mpr_en) begin
+                                $display ("%m: at time %t ERROR: Power Down Failure.  Multipurpose Register must be disabled.", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else if (!init_done) begin
+                                $display ("%m: at time %t ERROR: Power Down Failure.  Initialization sequence is not complete.", $time);
+                                if (STOP_ON_ERROR) $stop(0);
+                            end else begin
+                                if (DEBUG) begin
+                                    if (|active_bank) begin
+                                        $display ("%m: at time %t INFO: Active Power Down Enter", $time);
+                                    end else begin
+                                        $display ("%m: at time %t INFO: Precharge Power Down Enter", $time);
+                                    end
+                                end
+                                in_power_down = 1;
+                            end
+                        end
                     default : begin
                         $display ("%m: at time %t ERROR: NOP, Deselect, or Refresh is required when CKE goes inactive.", $time);
                     end
                 endcase
-            end else if (in_self_refresh || in_power_down) begin
+            end
+            else if (in_self_refresh || in_power_down) begin
                 if ((ck_cntr - ck_cke_cmd <= TCPDED) && (cmd !== NOP))
                     $display ("%m: at time %t ERROR: tCPDED violation during Power Down or Self Refresh Entry.  NOP or Deselect is required.", $time);
             end
             prev_cke  = cke;
-
         end
+
     endtask    
 
     task data_task;
@@ -2170,13 +2286,13 @@ module ddr3 (
                         end
                     end
                 end
-               if (rd_pipeline) begin
-                  if (rd_pipeline[2*cas_latency - 1]) begin
-                     tm_bank_read_end[ba_pipeline[2*cas_latency - 1]] <= $time;
-                  end
-	       end
+                if (rd_pipeline) begin
+                    if (rd_pipeline[2*cas_latency - 1]) begin
+                        tm_bank_read_end[ba_pipeline[2*cas_latency - 1]] <= $time;
+                    end
+	            end
                 for (i=0; i<`BANKS; i=i+1) begin
-		    if ((ck_cntr - ck_bank_write[i] > write_latency) && (ck_cntr - ck_bank_write[i] <= write_latency + burst_length/2)) begin
+		            if ((ck_cntr - ck_bank_write[i] > write_latency) && (ck_cntr - ck_bank_write[i] <= write_latency + burst_length/2)) begin
                         tm_bank_write_end[i] <= $time;
                         tm_group_write_end[i[1]] <= $time;
                         tm_write_end <= $time;
@@ -2221,7 +2337,7 @@ module ddr3 (
                             $display ("%m: at time %t ERROR: tJIT(cc) violation by %f ps.", $time, abs_value(tjit_cc_time) - TJIT_CC);
                         if (TCK_MIN - tck_avg >= 1.0)
                             $display ("%m: at time %t ERROR: tCK(avg) minimum violation by %f ps.", $time, TCK_MIN - tck_avg);
-                        if (tck_avg - TCK_MAX >= 1.0) 
+                        if (tck_avg - TCK_MAX >= 1.0)
                             $display ("%m: at time %t ERROR: tCK(avg) maximum violation by %f ps.", $time, tck_avg - TCK_MAX);
 
                         // check tCL
@@ -2472,21 +2588,21 @@ module ddr3 (
     end
 
     task cmd_addr_timing_check;
-    input i;
-    reg [4:0] i;
-    begin
-        if (rst_n_in && prev_cke) begin
-            if ((i == 0) && ($time - tm_ck_pos < TIH))	               // always check tIH for CS#
-                $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);
-            if ((i > 0) && (cs_n_in == 0) &&($time - tm_ck_pos < TIH)) // Only check tIH for cmd_addr if CS# is low
-                $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);
-            if ((i == 0) && ($time - tm_cmd_addr[i] < TIPW))           // always check tIPW for CS#
-                $display ("%m: at time %t ERROR: tIPW violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIPW - $time);
-            if ((i > 0) && (cs_n_in == 0) && ($time - tm_cmd_addr[i] < TIPW))
-                $display ("%m: at time %t ERROR: tIPW violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIPW - $time);
+        input i;
+        reg [4:0] i;
+        begin
+            if (rst_n_in && prev_cke) begin
+                if ((i == 0) && ($time - tm_ck_pos < TIH))	               // always check tIH for CS#
+                    $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);
+                if ((i > 0) && (cs_n_in == 0) &&($time - tm_ck_pos < TIH)) // Only check tIH for cmd_addr if CS# is low
+                    $display ("%m: at time %t ERROR:  tIH violation on %s by %t", $time, cmd_addr_string[i], tm_ck_pos + TIH - $time);
+                if ((i == 0) && ($time - tm_cmd_addr[i] < TIPW))           // always check tIPW for CS#
+                    $display ("%m: at time %t ERROR: tIPW violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIPW - $time);
+                if ((i > 0) && (cs_n_in == 0) && ($time - tm_cmd_addr[i] < TIPW))
+                    $display ("%m: at time %t ERROR: tIPW violation on %s by %t", $time, cmd_addr_string[i], tm_cmd_addr[i] + TIPW - $time);
+            end
+            tm_cmd_addr[i] = $time;
         end
-        tm_cmd_addr[i] = $time;
-    end
     endtask
 
     always @(cs_n_in    ) cmd_addr_timing_check( 0);
@@ -2516,20 +2632,20 @@ module ddr3 (
 
     // Processes to check setup and hold of data signals
     task dm_timing_check;
-    input i;
-    reg [4:0] i;
-    begin
-        if (dqs_in_valid) begin
-            if ($time - tm_dqs[i] < TDH) 
-                $display ("%m: at time %t ERROR:   tDH violation on DM bit %d by %t", $time, i, tm_dqs[i] + TDH - $time);
-            if (check_dm_tdipw[i]) begin
-                if ($time - tm_dm[i] < TDIPW)
-                    $display ("%m: at time %t ERROR: tDIPW violation on DM bit %d by %t", $time, i, tm_dm[i] + TDIPW - $time);
+        input i;
+        reg [4:0] i;
+        begin
+            if (dqs_in_valid) begin
+                if ($time - tm_dqs[i] < TDH)
+                    $display ("%m: at time %t ERROR:   tDH violation on DM bit %d by %t", $time, i, tm_dqs[i] + TDH - $time);
+                if (check_dm_tdipw[i]) begin
+                    if ($time - tm_dm[i] < TDIPW)
+                        $display ("%m: at time %t ERROR: tDIPW violation on DM bit %d by %t", $time, i, tm_dm[i] + TDIPW - $time);
+                end
             end
+            check_dm_tdipw[i] <= 1'b0;
+            tm_dm[i] = $time;
         end
-        check_dm_tdipw[i] <= 1'b0;
-        tm_dm[i] = $time;
-    end
     endtask
 
     always @(dm_in[ 0]) dm_timing_check( 0);
@@ -2567,20 +2683,20 @@ module ddr3 (
     always @(dm_in[31]) dm_timing_check(31);
 
     task dq_timing_check;
-    input i;
-    reg [6:0] i;
-    begin
-        if (dqs_in_valid) begin
-            if ($time - tm_dqs[i/(`DQ_PER_DQS)] < TDH) 
-                $display ("%m: at time %t ERROR:   tDH violation on DQ bit %d by %t", $time, i, tm_dqs[i/`DQ_PER_DQS] + TDH - $time);
-            if (check_dq_tdipw[i]) begin
-                if ($time - tm_dq[i] < TDIPW)
-                    $display ("%m: at time %t ERROR: tDIPW violation on DQ bit %d by %t", $time, i, tm_dq[i] + TDIPW - $time);
+        input i;
+        reg [6:0] i;
+        begin
+            if (dqs_in_valid) begin
+                if ($time - tm_dqs[i/(`DQ_PER_DQS)] < TDH)
+                    $display ("%m: at time %t ERROR:   tDH violation on DQ bit %d by %t", $time, i, tm_dqs[i/`DQ_PER_DQS] + TDH - $time);
+                if (check_dq_tdipw[i]) begin
+                    if ($time - tm_dq[i] < TDIPW)
+                        $display ("%m: at time %t ERROR: tDIPW violation on DQ bit %d by %t", $time, i, tm_dq[i] + TDIPW - $time);
+                end
             end
+            check_dq_tdipw[i] <= 1'b0;
+            tm_dq[i] = $time;
         end
-        check_dq_tdipw[i] <= 1'b0;
-        tm_dq[i] = $time;
-    end 
     endtask
 
     always @(dq_in[ 0]) dq_timing_check( 0);
@@ -2714,72 +2830,76 @@ module ddr3 (
     always @(dq_in[127]) dq_timing_check(127);
    
     task dqs_pos_timing_check;
-    input i;
-    reg [5:0] i;
-    reg [4:0] j;
-    begin
-        if (write_levelization && i<32) begin
-            if (ck_cntr - ck_load_mode < TWLMRD) 
-                $display ("%m: at time %t ERROR: tWLMRD violation on DQS bit %d positive edge.", $time, i);
-            if (($time - tm_ck_pos < TWLS) || ($time - tm_ck_neg < TWLS))
-                $display ("%m: at time %t WARNING: tWLS violation on DQS bit %d positive edge.  Indeterminate CK capture is possible.", $time, i);
-            if (DEBUG) 
-                $display ("%m: at time %t Write Leveling @ DQS ck = %b", $time, diff_ck);
-            dq_out_en_dly[i*`DQ_PER_DQS] <= #(TWLO) 1'b1;
-            dq_out_dly[i*`DQ_PER_DQS] <= #(TWLO) diff_ck;
+        input i;
+        reg [5:0] i;
+        reg [4:0] j;
+        begin
+            if (write_levelization && i<32) begin
+                if (ck_cntr - ck_load_mode < TWLMRD)
+                    $display ("%m: at time %t ERROR: tWLMRD violation on DQS bit %d positive edge.", $time, i);
+                if (($time - tm_ck_pos < TWLS) || ($time - tm_ck_neg < TWLS))
+                    $display ("%m: at time %t WARNING: tWLS violation on DQS bit %d positive edge.  Indeterminate CK capture is possible.", $time, i);
+                if (DEBUG)
+                    $display ("%m: at time %t Write Leveling @ DQS ck = %b", $time, diff_ck);
+                dq_out_en_dly[i*`DQ_PER_DQS] <= #(TWLO) 1'b1;
+                dq_out_dly[i*`DQ_PER_DQS] <= #(TWLO) diff_ck;
 `ifdef WL_ALLDQ
-            for (j=1; j<`DQ_PER_DQS; j=j+1) begin
-                dq_out_en_dly[i*`DQ_PER_DQS+j] <= #(TWLO) 1'b1;
-                dq_out_dly[i*`DQ_PER_DQS+j] <= #(TWLO) diff_ck;
-            end
+                for (j=1; j<`DQ_PER_DQS; j=j+1) begin
+                    dq_out_en_dly[i*`DQ_PER_DQS+j] <= #(TWLO) 1'b1;
+                    dq_out_dly[i*`DQ_PER_DQS+j] <= #(TWLO) diff_ck;
+                end
 `else
-            for (j=1; j<`DQ_PER_DQS; j=j+1) begin
-                dq_out_en_dly[i*`DQ_PER_DQS+j] <= #(TWLO + TWLOE) 1'b1;
-                dq_out_dly[i*`DQ_PER_DQS+j] <= #(TWLO + TWLOE) 1'b0;
-            end
+                for (j=1; j<`DQ_PER_DQS; j=j+1) begin
+                    dq_out_en_dly[i*`DQ_PER_DQS+j] <= #(TWLO + TWLOE) 1'b1;
+                    dq_out_dly[i*`DQ_PER_DQS+j] <= #(TWLO + TWLOE) 1'b0;
+                end
 `endif
-        end
-        if (dqs_in_valid && ((wdqs_pos_cntr[i] < wr_burst_length/2) || b2b_write)) begin
-            if (dqs_in[i] ^ prev_dqs_in[i]) begin
-                if (dll_locked) begin
-                    if (check_write_preamble[i]) begin
-                        if ($time - tm_dqs_pos[i] < $rtoi(TWPRE*tck_avg))
-                            $display ("%m: at time %t ERROR: tWPRE violation on %s bit %d", $time, dqs_string[i/32], i%32);
-                    end else if (check_write_postamble[i]) begin
-                        if ($time - tm_dqs_neg[i] < $rtoi(TWPST*tck_avg))
-                            $display ("%m: at time %t ERROR: tWPST violation on %s bit %d", $time, dqs_string[i/32], i%32);
-                    end else begin
-                        if ($time - tm_dqs_neg[i] < $rtoi(TDQSL*tck_avg))
-                            $display ("%m: at time %t ERROR: tDQSL violation on %s bit %d", $time, dqs_string[i/32], i%32);
-                    end
-                end
-                if ($time - tm_dm[i%32] < TDS) 
-                    $display ("%m: at time %t ERROR: tDS violation on DM bit %d by %t", $time, i,  tm_dm[i%32] + TDS - $time);
-                if (!dq_out_en) begin
-                    for (j=0; j<`DQ_PER_DQS; j=j+1) begin
-                        if ($time - tm_dq[(i%32)*`DQ_PER_DQS+j] < TDS) 
-                            $display ("%m: at time %t ERROR: tDS violation on DQ bit %d by %t", $time, i*`DQ_PER_DQS+j, tm_dq[(i%32)*`DQ_PER_DQS+j] + TDS - $time);
-                        check_dq_tdipw[(i%32)*`DQ_PER_DQS+j] <= 1'b1;
-                    end
-                end
-                if ((wdqs_pos_cntr[i] < wr_burst_length/2) && !b2b_write) begin
-                    wdqs_pos_cntr[i] <= wdqs_pos_cntr[i] + 1;
-                end else begin
-                    wdqs_pos_cntr[i] <= 1;
-                end
-                check_dm_tdipw[i%32] <= 1'b1;
-                check_write_preamble[i] <= 1'b0;
-                check_write_postamble[i] <= 1'b0;
-                check_write_dqs_low[i] <= 1'b0;
-                tm_dqs[i%32] <= $time;
-            end else begin
-                $display ("%m: at time %t ERROR: Invalid latching edge on %s bit %d", $time, dqs_string[i/32], i%32);
             end
+            if (dqs_in_valid && ((wdqs_pos_cntr[i] < wr_burst_length/2) || b2b_write)) begin
+                if (dqs_in[i] ^ prev_dqs_in[i]) begin
+                    if (dll_locked) begin
+                        if (check_write_preamble[i]) begin
+                            if ($time - tm_dqs_pos[i] < $rtoi(TWPRE*tck_avg))
+                                $display ("%m: at time %t ERROR: tWPRE violation on %s bit %d", $time, dqs_string[i/32], i%32);
+                        end
+                        else if (check_write_postamble[i]) begin
+                            if ($time - tm_dqs_neg[i] < $rtoi(TWPST*tck_avg))
+                                $display ("%m: at time %t ERROR: tWPST violation on %s bit %d", $time, dqs_string[i/32], i%32);
+                        end
+                        else begin
+                            if ($time - tm_dqs_neg[i] < $rtoi(TDQSL*tck_avg))
+                                $display ("%m: at time %t ERROR: tDQSL violation on %s bit %d", $time, dqs_string[i/32], i%32);
+                        end
+                    end
+                    if ($time - tm_dm[i%32] < TDS)
+                        $display ("%m: at time %t ERROR: tDS violation on DM bit %d by %t", $time, i,  tm_dm[i%32] + TDS - $time);
+                    if (!dq_out_en) begin
+                        for (j=0; j<`DQ_PER_DQS; j=j+1) begin
+                            if ($time - tm_dq[(i%32)*`DQ_PER_DQS+j] < TDS)
+                                $display ("%m: at time %t ERROR: tDS violation on DQ bit %d by %t", $time, i*`DQ_PER_DQS+j, tm_dq[(i%32)*`DQ_PER_DQS+j] + TDS - $time);
+                            check_dq_tdipw[(i%32)*`DQ_PER_DQS+j] <= 1'b1;
+                        end
+                    end
+                    if ((wdqs_pos_cntr[i] < wr_burst_length/2) && !b2b_write) begin
+                        wdqs_pos_cntr[i] <= wdqs_pos_cntr[i] + 1;
+                    end
+                    else begin
+                        wdqs_pos_cntr[i] <= 1;
+                    end
+                    check_dm_tdipw[i%32] <= 1'b1;
+                    check_write_preamble[i] <= 1'b0;
+                    check_write_postamble[i] <= 1'b0;
+                    check_write_dqs_low[i] <= 1'b0;
+                    tm_dqs[i%32] <= $time;
+                end
+                else begin
+                    $display ("%m: at time %t ERROR: Invalid latching edge on %s bit %d", $time, dqs_string[i/32], i%32);
+                end
+            end
+            tm_dqss_pos[i] <= $time;
+            tm_dqs_pos[i] = $time;
+            prev_dqs_in[i] <= dqs_in[i];
         end
-        tm_dqss_pos[i] <= $time;
-        tm_dqs_pos[i] = $time;
-        prev_dqs_in[i] <= dqs_in[i];
-    end
     endtask
 
     always @(posedge dqs_in[ 0]) if ( dqs_in[ 0]) dqs_pos_timing_check( 0);
@@ -2849,43 +2969,45 @@ module ddr3 (
     always @(negedge dqs_in[63]) if (!dqs_in[63]) dqs_pos_timing_check(63);
    
     task dqs_neg_timing_check;
-    input i;
-    reg [5:0] i;
-    reg [4:0] j;
-    begin
-        if (write_levelization && i<32) begin
-            if (ck_cntr - ck_load_mode < TWLDQSEN)
-                $display ("%m: at time %t ERROR: tWLDQSEN violation on DQS bit %d.", $time, i);
-            if ($time - tm_dqs_pos[i] < $rtoi(TDQSH*tck_avg))
-                $display ("%m: at time %t ERROR: tDQSH violation on DQS bit %d by %t", $time, i, tm_dqs_pos[i] + TDQSH*tck_avg - $time);
-        end
-        if (dqs_in_valid && (wdqs_pos_cntr[i] > 0) && check_write_dqs_high[i]) begin
-            if (dqs_in[i] ^ prev_dqs_in[i]) begin
-                if (dll_locked) begin
-                    if ($time - tm_dqs_pos[i] < $rtoi(TDQSH*tck_avg))
-                        $display ("%m: at time %t ERROR: tDQSH violation on %s bit %d", $time, dqs_string[i/32], i%32);
-                    if ($time - tm_ck_pos < $rtoi(TDSH*tck_avg))
-                        $display ("%m: at time %t ERROR: tDSH violation on %s bit %d", $time, dqs_string[i/32], i%32); 
-                end
-                if ($time - tm_dm[i%32] < TDS) 
-                    $display ("%m: at time %t ERROR: tDS violation on DM bit %d by %t", $time, i,  tm_dm[i%32] + TDS - $time);
-                if (!dq_out_en) begin
-                    for (j=0; j<`DQ_PER_DQS; j=j+1) begin
-                        if ($time - tm_dq[(i%32)*`DQ_PER_DQS+j] < TDS) 
-                            $display ("%m: at time %t ERROR: tDS violation on DQ bit %d by %t", $time, i*`DQ_PER_DQS+j, tm_dq[(i%32)*`DQ_PER_DQS+j] + TDS - $time);
-                        check_dq_tdipw[(i%32)*`DQ_PER_DQS+j] <= 1'b1;
-                    end
-                end
-                check_dm_tdipw[i%32] <= 1'b1;
-                tm_dqs[i%32] <= $time;
-            end else begin
-                $display ("%m: at time %t ERROR: Invalid latching edge on %s bit %d", $time, dqs_string[i/32], i%32);
+        input i;
+        reg [5:0] i;
+        reg [4:0] j;
+        begin
+            if (write_levelization && i<32) begin
+                if (ck_cntr - ck_load_mode < TWLDQSEN)
+                    $display ("%m: at time %t ERROR: tWLDQSEN violation on DQS bit %d.", $time, i);
+                if ($time - tm_dqs_pos[i] < $rtoi(TDQSH*tck_avg))
+                    $display ("%m: at time %t ERROR: tDQSH violation on DQS bit %d by %t", $time, i, tm_dqs_pos[i] + TDQSH*tck_avg - $time);
             end
+
+            if (dqs_in_valid && (wdqs_pos_cntr[i] > 0) && check_write_dqs_high[i]) begin
+                if (dqs_in[i] ^ prev_dqs_in[i]) begin
+                    if (dll_locked) begin
+                        if ($time - tm_dqs_pos[i] < $rtoi(TDQSH*tck_avg))
+                            $display ("%m: at time %t ERROR: tDQSH violation on %s bit %d", $time, dqs_string[i/32], i%32);
+                        if ($time - tm_ck_pos < $rtoi(TDSH*tck_avg))
+                            $display ("%m: at time %t ERROR: tDSH violation on %s bit %d", $time, dqs_string[i/32], i%32);
+                    end
+                    if ($time - tm_dm[i%32] < TDS)
+                        $display ("%m: at time %t ERROR: tDS violation on DM bit %d by %t", $time, i,  tm_dm[i%32] + TDS - $time);
+                    if (!dq_out_en) begin
+                        for (j=0; j<`DQ_PER_DQS; j=j+1) begin
+                            if ($time - tm_dq[(i%32)*`DQ_PER_DQS+j] < TDS)
+                                $display ("%m: at time %t ERROR: tDS violation on DQ bit %d by %t", $time, i*`DQ_PER_DQS+j, tm_dq[(i%32)*`DQ_PER_DQS+j] + TDS - $time);
+                            check_dq_tdipw[(i%32)*`DQ_PER_DQS+j] <= 1'b1;
+                        end
+                    end
+                    check_dm_tdipw[i%32] <= 1'b1;
+                    tm_dqs[i%32] <= $time;
+                end
+                else begin
+                    $display ("%m: at time %t ERROR: Invalid latching edge on %s bit %d", $time, dqs_string[i/32], i%32);
+                end
+            end
+            check_write_dqs_high[i] <= 1'b0;
+            tm_dqs_neg[i] = $time;
+            prev_dqs_in[i] <= dqs_in[i];
         end
-        check_write_dqs_high[i] <= 1'b0;
-        tm_dqs_neg[i] = $time;
-        prev_dqs_in[i] <= dqs_in[i];
-    end
     endtask
 
     always @(negedge dqs_in[ 0]) if (!dqs_in[ 0]) dqs_neg_timing_check( 0);

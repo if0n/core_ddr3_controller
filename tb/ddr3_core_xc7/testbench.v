@@ -67,6 +67,7 @@ wire  [  3:0] dfi_wrdata_mask;
 wire          dfi_rddata_en;
 wire [ 31:0]  dfi_rddata;
 wire          dfi_rddata_valid;
+wire  [  1:0] dfi_rddata_dnv;
 
 //-----------------------------------------------------------------
 // DRAM Model
@@ -77,7 +78,7 @@ wire [  1:0]  ddr3_dqs_p_w;
 wire [  1:0]  ddr3_dqs_n_w;
 
 ddr3
-u_ram
+u_ddr3
 (
      .rst_n(ddr3_reset_n_w)
     ,.ck(ddr3_ck_p_w)
@@ -114,6 +115,9 @@ u_phy
     ,.clk_ref_i(clk_ref)
     ,.rst_i(rst)
 
+    ,.cfg_valid_i(1'b0)
+    ,.cfg_i(32'd0)
+
     ,.dfi_address_i(dfi_address)
     ,.dfi_bank_i(dfi_bank)
     ,.dfi_cas_n_i(dfi_cas_n)
@@ -122,8 +126,8 @@ u_phy
     ,.dfi_odt_i(dfi_odt)
     ,.dfi_ras_n_i(dfi_ras_n)
     ,.dfi_reset_n_i(dfi_reset_n)
-    ,.dfi_we_n_i(dfi_we_n)
 
+    ,.dfi_we_n_i(dfi_we_n)
     ,.dfi_wrdata_i(dfi_wrdata)
     ,.dfi_wrdata_en_i(dfi_wrdata_en)
     ,.dfi_wrdata_mask_i(dfi_wrdata_mask)
@@ -131,7 +135,7 @@ u_phy
 
     ,.dfi_rddata_o(dfi_rddata)
     ,.dfi_rddata_valid_o(dfi_rddata_valid)
-    ,.dfi_rddata_dnv_o()
+    ,.dfi_rddata_dnv_o(dfi_rddata_dnv)
 
     ,.ddr3_ck_p_o(ddr3_ck_p_w)
     ,.ddr3_ck_n_o(ddr3_ck_n_w)
@@ -170,7 +174,7 @@ ddr3_core
     ,.DDR_READ_LATENCY(4)
     ,.DDR_MHZ(100)
 )
-u_ddr_core
+u_ddr3_core
 (
      .clk_i(clk)
     ,.rst_i(rst)

@@ -43,25 +43,23 @@ module ddr3_core
     // Inputs
      input           clk_i
     ,input           rst_i
+
     ,input           cfg_enable_i
     ,input           cfg_stb_i
     ,input  [ 31:0]  cfg_data_i
+    ,output          cfg_stall_o
+
     ,input  [ 15:0]  inport_wr_i
     ,input           inport_rd_i
     ,input  [ 31:0]  inport_addr_i
     ,input  [127:0]  inport_write_data_i
     ,input  [ 15:0]  inport_req_id_i
-    ,input  [ 31:0]  dfi_rddata_i
-    ,input           dfi_rddata_valid_i
-    ,input  [  1:0]  dfi_rddata_dnv_i
-
-    // Outputs
-    ,output          cfg_stall_o
     ,output          inport_accept_o
     ,output          inport_ack_o
     ,output          inport_error_o
     ,output [ 15:0]  inport_resp_id_o
     ,output [127:0]  inport_read_data_o
+
     ,output [ 14:0]  dfi_address_o
     ,output [  2:0]  dfi_bank_o
     ,output          dfi_cas_n_o
@@ -75,6 +73,10 @@ module ddr3_core
     ,output          dfi_wrdata_en_o
     ,output [  3:0]  dfi_wrdata_mask_o
     ,output          dfi_rddata_en_o
+    ,input  [ 31:0]  dfi_rddata_i
+    ,input           dfi_rddata_valid_i
+    ,input  [  1:0]  dfi_rddata_dnv_i
+
 );
 
 
@@ -307,12 +309,12 @@ localparam REFRESH_CNT_W = 20;
 
 reg [REFRESH_CNT_W-1:0] refresh_timer_q;
 always @ (posedge clk_i )
-if (rst_i)
-    refresh_timer_q <= DDR_START_DELAY;
-else if (refresh_timer_q == {REFRESH_CNT_W{1'b0}})
-    refresh_timer_q <= DDR_REFRESH_CYCLES;
-else
-    refresh_timer_q <= refresh_timer_q - 1;
+    if (rst_i)
+        refresh_timer_q <= DDR_START_DELAY;
+    else if (refresh_timer_q == {REFRESH_CNT_W{1'b0}})
+        refresh_timer_q <= DDR_REFRESH_CYCLES;
+    else
+        refresh_timer_q <= refresh_timer_q - 1;
 
 always @ (posedge clk_i )
 if (rst_i)
@@ -325,64 +327,63 @@ else if (state_q == STATE_REFRESH)
 //-----------------------------------------------------------------
 // Bank Logic
 //-----------------------------------------------------------------
-integer idx;
-
 always @ (posedge clk_i )
-if (rst_i)
 begin
-    for (idx=0;idx<DDR_BANKS;idx=idx+1)
-        active_row_q[idx] <= {DDR_ROW_W{1'b0}};
-
-    row_open_q      <= {DDR_BANKS{1'b0}};
-end
-else
-begin
-    case (state_q)
-    //-----------------------------------------
-    // STATE_IDLE / Default (delays)
-    //-----------------------------------------
-    default:
-    begin
-        if (!cfg_enable_i)
-            row_open_q <= {DDR_BANKS{1'b0}};
-    end
-    //-----------------------------------------
-    // STATE_ACTIVATE
-    //-----------------------------------------
-    STATE_ACTIVATE :
-    begin
-        active_row_q[addr_bank_w]  <= addr_row_w;
-        row_open_q[addr_bank_w]    <= 1'b1;
-    end
-    //-----------------------------------------
-    // STATE_PRECHARGE
-    //-----------------------------------------
-    STATE_PRECHARGE :
-    begin
-        // Precharge due to refresh, close all banks
-        if (target_state_q == STATE_REFRESH)
+    if (rst_i)
         begin
-            // Precharge all banks
-            row_open_q          <= {DDR_BANKS{1'b0}};
-        end
-        else
-        begin
-            // Precharge specific banks
-            row_open_q[addr_bank_w] <= 1'b0;
-        end
-    end
-    endcase
-end
+            for (integer i=0; i<DDR_BANKS; i=i+1)
+                active_row_q[i] <= {DDR_ROW_W{1'b0}};
 
+            row_open_q      <= {DDR_BANKS{1'b0}};
+        end
+    else
+        begin
+            case (state_q)
+            //-----------------------------------------
+            // STATE_IDLE / Default (delays)
+            //-----------------------------------------
+            default:
+                begin
+                    if (!cfg_enable_i)
+                        row_open_q <= {DDR_BANKS{1'b0}};
+                end
+            //-----------------------------------------
+            // STATE_ACTIVATE
+            //-----------------------------------------
+            STATE_ACTIVATE :
+                begin
+                    active_row_q[addr_bank_w]  <= addr_row_w;
+                    row_open_q[addr_bank_w]    <= 1'b1;
+                end
+            //-----------------------------------------
+            // STATE_PRECHARGE
+            //-----------------------------------------
+            STATE_PRECHARGE :
+                begin
+                    // Precharge due to refresh, close all banks
+                    if (target_state_q == STATE_REFRESH)
+                        begin
+                            // Precharge all banks
+                            row_open_q          <= {DDR_BANKS{1'b0}};
+                        end
+                    else
+                        begin
+                            // Precharge specific banks
+                            row_open_q[addr_bank_w] <= 1'b0;
+                        end
+                end
+            endcase
+        end
+end
 //-----------------------------------------------------------------
 // Command
 //-----------------------------------------------------------------
 reg [CMD_W-1:0]      command_r;
 reg [DDR_ROW_W-1:0]  addr_r;
-reg                  cke_r;
 reg [DDR_BANK_W-1:0] bank_r;
+reg                  cke_r;
 
-always @ *
+always @(*)
 begin
     command_r = CMD_NOP;
     addr_r    = {DDR_ROW_W{1'b0}};
@@ -390,134 +391,133 @@ begin
     cke_r     = 1'b1;
 
     case (state_q)
-    //-----------------------------------------
-    // STATE_INIT
-    //-----------------------------------------
-    STATE_INIT:
-    begin
-        // Assert CKE after 500uS
-        if (refresh_timer_q > 2500)
-            cke_r = 1'b0;
+        //-----------------------------------------
+        // STATE_INIT
+        //-----------------------------------------
+        STATE_INIT:
+            begin
+                // Assert CKE after 500uS
+                if (refresh_timer_q > 2500)
+                    cke_r = 1'b0;
 
-        if (refresh_timer_q == 2400)
+                if (refresh_timer_q == 2400)
+                    begin
+                        command_r = CMD_LOAD_MODE;
+                        bank_r    = 3'd2;
+                        addr_r    = MR2_REG;
+                    end
+
+                if (refresh_timer_q == 2300)
+                    begin
+                        command_r = CMD_LOAD_MODE;
+                        bank_r    = 3'd3;
+                        addr_r    = MR3_REG;
+                    end
+
+                if (refresh_timer_q == 2200)
+                    begin
+                        command_r = CMD_LOAD_MODE;
+                        bank_r    = 3'd1;
+                        addr_r    = MR1_REG;
+                    end
+
+                if (refresh_timer_q == 2100)
+                    begin
+                        command_r = CMD_LOAD_MODE;
+                        bank_r    = 3'd0;
+                        addr_r    = MR0_REG;
+                    end
+
+                // Long ZQ calibration
+                if (refresh_timer_q == 2000)
+                    begin
+                        command_r  = CMD_ZQCL;
+                        addr_r[10] = 1;
+                    end
+
+                // ---
+
+                // PRECHARGE
+                if (refresh_timer_q == 10)
+                    begin
+                        // Precharge all banks
+                        command_r           = CMD_PRECHARGE;
+                        addr_r[ALL_BANKS]   = 1'b1;
+                    end
+            end
+        //-----------------------------------------
+        // STATE_IDLE
+        //-----------------------------------------
+        STATE_IDLE :
+            begin
+                if (!cfg_enable_i && cfg_stb_i)
+                    {cke_r, addr_r, bank_r, command_r} = cfg_data_i[CMD_W + DDR_ROW_W + DDR_BANK_W:0];
+            end
+        //-----------------------------------------
+        // STATE_ACTIVATE
+        //-----------------------------------------
+        STATE_ACTIVATE :
+            begin
+                // Select a row and activate it
+                command_r     = CMD_ACTIVE;
+                addr_r        = addr_row_w;
+                bank_r        = addr_bank_w;
+            end
+        //-----------------------------------------
+        // STATE_PRECHARGE
+        //-----------------------------------------
+        STATE_PRECHARGE :
         begin
-            command_r = CMD_LOAD_MODE;
-            bank_r    = 3'd2;
-            addr_r    = MR2_REG;
+            // Precharge due to refresh, close all banks
+            if (target_state_r == STATE_REFRESH)
+                begin
+                    // Precharge all banks
+                    command_r           = CMD_PRECHARGE;
+                    addr_r[ALL_BANKS]   = 1'b1;
+                end
+            else
+                begin
+                    // Precharge specific banks
+                    command_r           = CMD_PRECHARGE;
+                    addr_r[ALL_BANKS]   = 1'b0;
+                    bank_r              = addr_bank_w;
+                end
         end
+        //-----------------------------------------
+        // STATE_REFRESH
+        //-----------------------------------------
+        STATE_REFRESH :
+            begin
+                // Auto refresh
+                command_r    = CMD_REFRESH;
+                addr_r       = {DDR_ROW_W{1'b0}};
+                bank_r       = {DDR_BANK_W{1'b0}};
+            end
+        //-----------------------------------------
+        // STATE_READ
+        //-----------------------------------------
+        STATE_READ :
+            begin
+                command_r    = CMD_READ;
+                addr_r       = {addr_col_w[DDR_ROW_W-1:3], 3'b0};
+                bank_r       = addr_bank_w;
 
-        if (refresh_timer_q == 2300)
-        begin
-            command_r = CMD_LOAD_MODE;
-            bank_r    = 3'd3;
-            addr_r    = MR3_REG;
-        end
+                // Disable auto precharge (auto close of row)
+                addr_r[AUTO_PRECHARGE]  = 1'b0;
+            end
+        //-----------------------------------------
+        // STATE_WRITE
+        //-----------------------------------------
+        STATE_WRITE :
+            begin
+                command_r        = CMD_WRITE;
+                addr_r           = {addr_col_w[DDR_ROW_W-1:3], 3'b0};
+                bank_r           = addr_bank_w;
 
-        if (refresh_timer_q == 2200)
-        begin
-            command_r = CMD_LOAD_MODE;
-            bank_r    = 3'd1;
-            addr_r    = MR1_REG;
-        end
-
-        if (refresh_timer_q == 2100)
-        begin
-            command_r = CMD_LOAD_MODE;
-            bank_r    = 3'd0;
-            addr_r    = MR0_REG;
-        end
-
-        // Long ZQ calibration
-        if (refresh_timer_q == 2000)
-        begin
-            command_r  = CMD_ZQCL;
-            addr_r[10] = 1;
-        end
-
-        // --- 
-
-        // PRECHARGE
-        if (refresh_timer_q == 10)
-        begin
-            // Precharge all banks
-            command_r           = CMD_PRECHARGE;
-            addr_r[ALL_BANKS]   = 1'b1;
-        end
-    end
-    //-----------------------------------------
-    // STATE_IDLE
-    //-----------------------------------------
-    STATE_IDLE :
-    begin
-        if (!cfg_enable_i && cfg_stb_i)
-            {cke_r, addr_r, bank_r, command_r} = cfg_data_i[CMD_W + DDR_ROW_W + DDR_BANK_W:0];
-    end
-    //-----------------------------------------
-    // STATE_ACTIVATE
-    //-----------------------------------------
-    STATE_ACTIVATE :
-    begin
-        // Select a row and activate it
-        command_r     = CMD_ACTIVE;
-        addr_r        = addr_row_w;
-        bank_r        = addr_bank_w;
-    end
-    //-----------------------------------------
-    // STATE_PRECHARGE
-    //-----------------------------------------
-    STATE_PRECHARGE :
-    begin
-        // Precharge due to refresh, close all banks
-        if (target_state_r == STATE_REFRESH)
-        begin
-            // Precharge all banks
-            command_r           = CMD_PRECHARGE;
-            addr_r[ALL_BANKS]   = 1'b1;
-        end
-        else
-        begin
-            // Precharge specific banks
-            command_r           = CMD_PRECHARGE;
-            addr_r[ALL_BANKS]   = 1'b0;
-            bank_r              = addr_bank_w;
-        end
-    end
-    //-----------------------------------------
-    // STATE_REFRESH
-    //-----------------------------------------
-    STATE_REFRESH :
-    begin
-        // Auto refresh
-        command_r    = CMD_REFRESH;
-        addr_r       = {DDR_ROW_W{1'b0}};
-        bank_r       = {DDR_BANK_W{1'b0}};        
-    end
-    //-----------------------------------------
-    // STATE_READ
-    //-----------------------------------------
-    STATE_READ :
-    begin
-        command_r    = CMD_READ;
-        addr_r       = {addr_col_w[DDR_ROW_W-1:3], 3'b0};
-        bank_r       = addr_bank_w;
-
-        // Disable auto precharge (auto close of row)
-        addr_r[AUTO_PRECHARGE]  = 1'b0;
-    end
-    //-----------------------------------------
-    // STATE_WRITE
-    //-----------------------------------------
-    STATE_WRITE :
-    begin
-        command_r        = CMD_WRITE;
-        addr_r           = {addr_col_w[DDR_ROW_W-1:3], 3'b0};
-        bank_r           = addr_bank_w;
-
-        // Disable auto precharge (auto close of row)
-        addr_r[AUTO_PRECHARGE] = 1'b0;
-    end
-    default:
-        ;
+                // Disable auto precharge (auto close of row)
+                addr_r[AUTO_PRECHARGE] = 1'b0;
+            end
+        default: ;
     endcase
 end
 
@@ -527,10 +527,12 @@ end
 reg write_ack_q;
 
 always @ (posedge clk_i )
-if (rst_i)
-    write_ack_q <= 1'b0;
-else
-    write_ack_q <= (state_q == STATE_WRITE) && cmd_accept_w;
+begin
+    if (rst_i)
+        write_ack_q <= 1'b0;
+    else
+        write_ack_q <= (state_q == STATE_WRITE) && cmd_accept_w;
+end
 
 ddr3_fifo
 #(

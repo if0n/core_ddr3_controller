@@ -4,8 +4,8 @@
 `define XILINX_SIMULATOR
 
 `define den2048Mb
-// `define sg125
-// `define x16
+`define sg093
+`define x16
 
 `define range(i,COLUMN_WIDTH)                   ((i) + 1) * (COLUMN_WIDTH) - 1                  : (i) * (COLUMN_WIDTH)
 `define range_n(i,COLUMN_WIDTH,n)               (i) * (COLUMN_WIDTH) + (n) - 1                  : (i) * (COLUMN_WIDTH)

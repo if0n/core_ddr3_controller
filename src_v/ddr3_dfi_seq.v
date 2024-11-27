@@ -197,59 +197,49 @@ wire rd_en_w = rd_en_q[0];
 //-----------------------------------------------------------------
 /* verilator lint_off WIDTH */
 
-always @ *
+always @(*)
 begin
     delay_r = delay_q;
 
     if (delay_q == {DELAY_W{1'b0}})
-    begin
-        //-----------------------------------------
-        // ACTIVATE
-        //-----------------------------------------
-        if (command_i == CMD_ACTIVE)
         begin
-            // tRCD (ACTIVATE -> READ / WRITE)
-            delay_r = DDR_TRCD_CYCLES;        
+            //-----------------------------------------
+            // ACTIVATE
+            //-----------------------------------------
+            if (command_i == CMD_ACTIVE)
+                // tRCD (ACTIVATE -> READ / WRITE)
+                delay_r = DDR_TRCD_CYCLES;
+            //-----------------------------------------
+            // READ / WRITE
+            //-----------------------------------------
+            else if (command_i == CMD_READ || command_i == CMD_WRITE)
+                delay_r = DDR_RW_NONSEQ_CYCLES;
+            //-----------------------------------------
+            // PRECHARGE
+            //-----------------------------------------
+            else if (command_i == CMD_PRECHARGE)
+                // tRP (PRECHARGE -> ACTIVATE)
+                delay_r = DDR_TRP_CYCLES;
+            //-----------------------------------------
+            // REFRESH
+            //-----------------------------------------
+            else if (command_i == CMD_REFRESH)
+                // tRFC
+                delay_r = DDR_TRFC_CYCLES;
+            //-----------------------------------------
+            // Others
+            //-----------------------------------------
+            else
+                delay_r = {DELAY_W{1'b0}};
         end
-        //-----------------------------------------
-        // READ / WRITE
-        //-----------------------------------------
-        else if (command_i == CMD_READ || command_i == CMD_WRITE)
-        begin
-            delay_r = DDR_RW_NONSEQ_CYCLES;
-        end
-        //-----------------------------------------
-        // PRECHARGE
-        //-----------------------------------------
-        else if (command_i == CMD_PRECHARGE)
-        begin
-            // tRP (PRECHARGE -> ACTIVATE)
-            delay_r = DDR_TRP_CYCLES;
-        end
-        //-----------------------------------------
-        // REFRESH
-        //-----------------------------------------
-        else if (command_i == CMD_REFRESH)
-        begin
-            // tRFC
-            delay_r = DDR_TRFC_CYCLES;
-        end
-        //-----------------------------------------
-        // Others
-        //-----------------------------------------
-        else
-            delay_r = {DELAY_W{1'b0}};
-    end
     else if (delay_r != {DELAY_W{1'b0}})
-    begin
-        delay_r = delay_q - 4'd1;
-
-        // Read to Read, Write to Write
-        if (read_early_accept_w || write_early_accept_w)
         begin
-            delay_r = DDR_RW_NONSEQ_CYCLES;
+            delay_r = delay_q - 4'd1;
+            // Read to Read, Write to Write
+            if (read_early_accept_w || write_early_accept_w)
+                delay_r = DDR_RW_NONSEQ_CYCLES;
         end
-    end
+    /// else
 end
 /* verilator lint_on WIDTH */
 
@@ -268,30 +258,34 @@ reg [DDR_BANK_W-1:0] bank_q;
 reg                  cke_q;
 
 always @ (posedge clk_i )
-if (rst_i)
 begin
-    command_q       <= CMD_NOP;
-    addr_q          <= {DDR_ROW_W{1'b0}};
-    bank_q          <= {DDR_BANK_W{1'b0}};
-end
-else if (accept_o)
-begin
-    command_q       <= command_i;
-    addr_q          <= address_i;
-    bank_q          <= bank_i;
-end
-else
-begin
-    command_q       <= CMD_NOP;
-    addr_q          <= {DDR_ROW_W{1'b0}};
-    bank_q          <= {DDR_BANK_W{1'b0}};
+    if (rst_i)
+        begin
+            command_q       <= CMD_NOP;
+            addr_q          <= {DDR_ROW_W{1'b0}};
+            bank_q          <= {DDR_BANK_W{1'b0}};
+        end
+    else if (accept_o)
+        begin
+            command_q       <= command_i;
+            addr_q          <= address_i;
+            bank_q          <= bank_i;
+        end
+    else
+        begin
+            command_q       <= CMD_NOP;
+            addr_q          <= {DDR_ROW_W{1'b0}};
+            bank_q          <= {DDR_BANK_W{1'b0}};
+        end
 end
 
 always @ (posedge clk_i )
-if (rst_i)
-    cke_q           <= 1'b0; 
-else
-    cke_q           <= cke_i;
+begin
+    if (rst_i)
+        cke_q           <= 1'b0;
+    else
+        cke_q           <= cke_i;
+end
 
 assign dfi_address_o     = addr_q;
 assign dfi_bank_o        = bank_q;
@@ -306,39 +300,41 @@ assign dfi_reset_n_o     = 1'b1;
 //-----------------------------------------------------------------
 // Write Data
 //-----------------------------------------------------------------
-reg [DDR_DATA_W-1:0] dfi_wrdata_q;
-reg [DDR_DQM_W-1:0]  dfi_wrdata_mask_q;
-reg [1:0] dfi_wr_idx_q;
+reg [DDR_DATA_W-1:0]    dfi_wrdata_q;
+reg [DDR_DQM_W-1:0]     dfi_wrdata_mask_q;
+reg [1:0]               dfi_wr_idx_q;
 
 always @ (posedge clk_i )
-if (rst_i)
 begin
-    dfi_wrdata_q        <= {DDR_DATA_W{1'b0}};
-    dfi_wrdata_mask_q   <= {DDR_DQM_W{1'b0}};
-    dfi_wr_idx_q        <= 2'b0;
-end
-else if (wr_en_w)
-begin
-    case (dfi_wr_idx_q)
-    default: dfi_wrdata_q  <= wrdata_w[31:0];
-    2'd1:    dfi_wrdata_q  <= wrdata_w[63:32];
-    2'd2:    dfi_wrdata_q  <= wrdata_w[95:64];
-    2'd3:    dfi_wrdata_q  <= wrdata_w[127:96];
-    endcase
+    if (rst_i)
+        begin
+            dfi_wrdata_q        <= {DDR_DATA_W{1'b0}};
+            dfi_wrdata_mask_q   <= {DDR_DQM_W{1'b0}};
+            dfi_wr_idx_q        <= 2'b0;
+        end
+    else if (wr_en_w)
+        begin
+            case (dfi_wr_idx_q)
+                default: dfi_wrdata_q  <= wrdata_w[31:0];
+                2'd1:    dfi_wrdata_q  <= wrdata_w[63:32];
+                2'd2:    dfi_wrdata_q  <= wrdata_w[95:64];
+                2'd3:    dfi_wrdata_q  <= wrdata_w[127:96];
+            endcase
 
-    case (dfi_wr_idx_q)
-    default: dfi_wrdata_mask_q  <= wrdata_mask_w[3:0];
-    2'd1:    dfi_wrdata_mask_q  <= wrdata_mask_w[7:4];
-    2'd2:    dfi_wrdata_mask_q  <= wrdata_mask_w[11:8];
-    2'd3:    dfi_wrdata_mask_q  <= wrdata_mask_w[15:12];
-    endcase
+            case (dfi_wr_idx_q)
+                default: dfi_wrdata_mask_q  <= wrdata_mask_w[3:0];
+                2'd1:    dfi_wrdata_mask_q  <= wrdata_mask_w[7:4];
+                2'd2:    dfi_wrdata_mask_q  <= wrdata_mask_w[11:8];
+                2'd3:    dfi_wrdata_mask_q  <= wrdata_mask_w[15:12];
+            endcase
 
-    dfi_wr_idx_q <= dfi_wr_idx_q + 2'd1;
-end
-else
-begin
-    dfi_wrdata_q        <= {DDR_DATA_W{1'b0}};
-    dfi_wrdata_mask_q   <= {DDR_DQM_W{1'b0}};
+            dfi_wr_idx_q <= dfi_wr_idx_q + 2'd1;
+        end
+    else
+        begin
+            dfi_wrdata_q        <= {DDR_DATA_W{1'b0}};
+            dfi_wrdata_mask_q   <= {DDR_DQM_W{1'b0}};
+        end
 end
 
 assign write_pop_w       = wr_en_w && (dfi_wr_idx_q == 2'd3);
@@ -350,10 +346,12 @@ assign dfi_wrdata_mask_o = dfi_wrdata_mask_q;
 reg dfi_wrdata_en_q;
 
 always @ (posedge clk_i )
-if (rst_i)
-    dfi_wrdata_en_q <= 1'b0;
-else
-    dfi_wrdata_en_q <= wr_en_w;
+begin
+    if (rst_i)
+        dfi_wrdata_en_q <= 1'b0;
+    else
+        dfi_wrdata_en_q <= wr_en_w;
+end
 
 assign dfi_wrdata_en_o   = dfi_wrdata_en_q;
 
@@ -361,10 +359,12 @@ assign dfi_wrdata_en_o   = dfi_wrdata_en_q;
 reg dfi_rddata_en_q;
 
 always @ (posedge clk_i )
-if (rst_i)
-    dfi_rddata_en_q <= 1'b0;
-else
-    dfi_rddata_en_q <= rd_en_w;
+begin
+    if (rst_i)
+        dfi_rddata_en_q <= 1'b0;
+    else
+        dfi_rddata_en_q <= rd_en_w;
+end
 
 assign dfi_rddata_en_o   = dfi_rddata_en_q;
 
@@ -372,29 +372,33 @@ assign dfi_rddata_en_o   = dfi_rddata_en_q;
 // Read Data
 //-----------------------------------------------------------------
 reg [1:0] dfi_rd_idx_q;
-
 always @ (posedge clk_i )
-if (rst_i)
-    dfi_rd_idx_q <= 2'b0;
-else if (dfi_rddata_valid_i)
-    dfi_rd_idx_q <= dfi_rd_idx_q + 2'd1;
-
-reg [127:0]  rd_data_q;
-
-always @ (posedge clk_i )
-if (rst_i)
-    rd_data_q <= 128'b0;
-else if (dfi_rddata_valid_i)
-    rd_data_q <= {dfi_rddata_i, rd_data_q[127:32]};
+begin
+    if (rst_i)
+        dfi_rd_idx_q <= 2'b0;
+    else if (dfi_rddata_valid_i)
+        dfi_rd_idx_q <= dfi_rd_idx_q + 2'd1;
+end
 
 reg rd_valid_q;
 always @ (posedge clk_i )
-if (rst_i)
-    rd_valid_q <= 1'b0;
-else if (dfi_rddata_valid_i && dfi_rd_idx_q == 2'd3)
-    rd_valid_q <= 1'b1;
-else
-    rd_valid_q <= 1'b0;
+begin
+    if (rst_i)
+        rd_valid_q <= 1'b0;
+    else if (dfi_rddata_valid_i && (dfi_rd_idx_q == 2'd3))
+        rd_valid_q <= 1'b1;
+    else
+        rd_valid_q <= 1'b0;
+end
+
+reg [127:0]  rd_data_q;
+always @ (posedge clk_i )
+begin
+    if (rst_i)
+        rd_data_q <= 128'b0;
+    else if (dfi_rddata_valid_i)
+        rd_data_q <= {dfi_rddata_i, rd_data_q[127:32]};
+end
 
 assign rddata_valid_o    = rd_valid_q;
 assign rddata_o          = rd_data_q;
@@ -442,14 +446,15 @@ module ddr3_dfi_fifo
     // Inputs
      input               clk_i
     ,input               rst_i
-    ,input  [WIDTH-1:0]  data_in_i
+
     ,input               push_i
-    ,input               pop_i
+    ,input  [WIDTH-1:0]  data_in_i
+    ,output              accept_o
 
     // Outputs
-    ,output [WIDTH-1:0]  data_out_o
-    ,output              accept_o
     ,output              valid_o
+    ,output [WIDTH-1:0]  data_out_o
+    ,input               pop_i
 );
 
 //-----------------------------------------------------------------
@@ -469,31 +474,44 @@ reg [COUNT_W-1:0]       count;
 // Sequential
 //-----------------------------------------------------------------
 always @ (posedge clk_i )
-if (rst_i)
 begin
-    count   <= {(COUNT_W) {1'b0}};
-    rd_ptr  <= {(ADDR_W) {1'b0}};
-    wr_ptr  <= {(ADDR_W) {1'b0}};
+    if (rst_i)
+        count   <= {(COUNT_W) {1'b0}};
+    // Count up
+    else if ((push_i & accept_o) & !(pop_i & valid_o))
+        count   <= count + 1;
+    // Count down
+    else if (!(push_i & accept_o) & (pop_i & valid_o))
+        count <= count - 1;
+    /// else hold
 end
-else
+
+always @ (posedge clk_i )
+begin
+    if (rst_i)
+        wr_ptr  <= {(ADDR_W) {1'b0}};
+    // Push
+    else if (push_i & accept_o)
+        wr_ptr      <= wr_ptr + 1;
+    /// else hold
+end
+
+always @ (posedge clk_i )
 begin
     // Push
     if (push_i & accept_o)
-    begin
         ram[wr_ptr] <= data_in_i;
-        wr_ptr      <= wr_ptr + 1;
-    end
+    /// else hold
+end
 
+always @ (posedge clk_i )
+begin
+    if (rst_i)
+        rd_ptr  <= {(ADDR_W) {1'b0}};
     // Pop
-    if (pop_i & valid_o)
-        rd_ptr      <= rd_ptr + 1;
-
-    // Count up
-    if ((push_i & accept_o) & ~(pop_i & valid_o))
-        count <= count + 1;
-    // Count down
-    else if (~(push_i & accept_o) & (pop_i & valid_o))
-        count <= count - 1;
+    else if (pop_i & valid_o)
+        rd_ptr  <= rd_ptr + 1;
+    /// else hold
 end
 
 //-------------------------------------------------------------------
@@ -505,7 +523,5 @@ assign valid_o    = (count != 0);
 /* verilator lint_on WIDTH */
 
 assign data_out_o = ram[rd_ptr];
-
-
 
 endmodule
