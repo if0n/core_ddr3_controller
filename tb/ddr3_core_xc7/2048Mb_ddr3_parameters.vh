@@ -657,6 +657,8 @@ function valid_cl;
 `elsif sg25
         {4'd5, 4'd5 },
         {4'd5, 4'd6 }: valid_cl = 1;
+`else
+        ;
 `endif
         default : valid_cl = 0;
     endcase
