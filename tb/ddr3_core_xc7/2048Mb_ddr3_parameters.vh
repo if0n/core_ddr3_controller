@@ -44,6 +44,7 @@
     parameter TERR_10PER       =     128; // tERR(10per)ps    Accumulated Error (10-cycle)
     parameter TERR_11PER       =     132; // tERR(11per)ps    Accumulated Error (11-cycle)
     parameter TERR_12PER       =     134; // tERR(12per)ps    Accumulated Error (12-cycle)
+
     parameter TDS              =       5; // tDS        ps    DQ and DM input setup time relative to DQS
     parameter TDH              =      20; // tDH        ps    DQ and DM input hold time relative to DQS
     parameter TDQSQ            =      70; // tDQSQ      ps    DQS-DQ skew, DQS to last DQ valid, per group, per access
@@ -57,6 +58,7 @@
     parameter TIPW             =     470; // tIPW       ps    Control and Address input Pulse Width  
     parameter TIS              =      35; // tIS        ps    Input Setup Time
     parameter TIH              =      75; // tIH        ps    Input Hold Time
+
     parameter TRAS_MIN         =   33000; // tRAS       ps    Minimum Active to Precharge command time
     parameter TRC              =   46130; // tRC        ps    Active to Active/Auto Refresh command time
     parameter TRCD             =   13090; // tRCD       ps    Active to Read/Write command time
